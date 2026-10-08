@@ -37,8 +37,8 @@ pick which spellbook to study:
 | **Roots & Affixes** (`roots.js`) | harder — 8th grade | Greek/Latin roots with one meaning each, plus example words. |
 | **Vocabulary Words** (`words.js`) | easier — 4th grade | Whole words, each with several possible meanings. |
 
-Each list keeps **its own** level, gold, gear and question pool, so two players
-can share a browser (or one player can switch between levels) without
+Each list keeps **its own** level, gold, gear, mastery data and question pool, so
+two players can share a browser (or one player can switch between levels) without
 overwriting each other's progress. The active list is shown in the stats panel.
 
 ### Casting spells (the core loop)
@@ -68,6 +68,21 @@ Answer matching is forgiving: for meanings, you can type the full definition or
 any significant word in it (so "care" is accepted for "care for"), and anything
 in parentheses is context for the reader only — "mean-spirited (dialogue)" is
 answered by typing just `mean-spirited`.
+
+### Mastery and adaptive review
+
+Every term has its own learning state:
+
+**New → Learning → Familiar → Mastered**
+
+Correct recalls move a term forward through those stages. Misses move advanced
+material back into heavier review rather than erasing all prior progress.
+Question selection is weighted toward new, learning and recently missed terms;
+mastered terms still return occasionally so they stay fresh.
+
+Mastery is stored with the active word list's save. The stats panel shows how
+many terms are currently mastered, and the result screen shows the current
+term's mastery state after each answer.
 
 ### Streaks & combos
 
@@ -99,6 +114,7 @@ Your Etymancer panel tracks:
 - **Mana** — earned by casting; spent to *channel* in duels (see below). Caps at
   a maximum (starts at 30).
 - **Streak** — current run of correct casts (drives the combo multiplier).
+- **Mastered** — how many terms in the active spellbook have reached Mastered.
 - **Intelligence / Strength** — raised by gear; together they determine your
   spell damage in duels, and Strength also adds duel HP.
 - **Robes / Staff** — your currently equipped armor and weapon. INT and STR are
@@ -190,23 +206,21 @@ a `definePrompt`, and its data. The map key becomes the list's id and its
 | `roots.js` | Harder list (`ROOTS`): word roots, one definition each, plus example words. |
 | `words.js` | Easier list (`WORDS`): whole words, each with several meanings. |
 | `equipment.js` | The shop catalog (`EQUIPMENT`): robes and staves with stats. |
+| `mastery.js` | Per-term mastery, adaptive review weighting, persistence hooks, and mastery UI. |
 | `style.css` | The green-on-black terminal theme. |
 | `manifest.json` | PWA metadata (name, icons, theme). |
 | `favicon.svg` | Scalable browser-tab icon (green terminal "E"). |
 | `apple-touch-icon.png` | Home-screen icon for iOS. |
-| `tests/playthrough.js` | Node harness that plays a full session and checks the rules and the progression math. |
+| `tests/playthrough.js` | Node harness covering the main game loop, saves, gear, duels, legacy migration, and mastery/adaptive review. |
 
 ## Tests
 
 `tests/playthrough.js` loads the real script out of `index.html` against small
-DOM/`localStorage` stubs and plays a whole session: casting right, wrong and
-fizzled answers on both lists, the How to Play screen, the Emporium (buying,
-equipping, refusals, mana crystals), full duels with Cast and Channel, win and
-loss, older saves, and a printed progression table.
+DOM/`localStorage` stubs and exercises the main game systems plus mastery
+progression, persistence, demotion, list isolation, and adaptive review weights.
 
 ```bash
 node tests/playthrough.js
 ```
 
-It prints `RESULT: N checks passed, 0 failed` when the game is behaving, plus the
-duel-damage and level-by-level progression tables for eyeballing balance changes.
+It prints `RESULT: N checks passed, 0 failed` when the game is behaving.
