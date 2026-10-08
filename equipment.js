@@ -36,8 +36,11 @@ const EQUIPMENT = {
 
 // mastery.js depends on the EtymancerGame class and global game instance defined
 // later in index.html, so load it after the document (and inline game script) finish.
-window.addEventListener('DOMContentLoaded', () => {
-    const script = document.createElement('script');
-    script.src = 'mastery.js';
-    document.body.appendChild(script);
-});
+// The guard keeps equipment.js safe for the Node-based playthrough harness.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        const script = document.createElement('script');
+        script.src = 'mastery.js';
+        document.body.appendChild(script);
+    });
+}
