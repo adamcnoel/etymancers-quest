@@ -34,13 +34,15 @@ const EQUIPMENT = {
     "staff of eternity": {cost: 650, strength: 10, intelligence: 40, type: "weapon"}
 };
 
-// mastery.js depends on the EtymancerGame class and global game instance defined
-// later in index.html, so load it after the document (and inline game script) finish.
-// The guard keeps equipment.js safe for the Node-based playthrough harness.
+// Browser-only extensions depend on the EtymancerGame class and global game
+// instance defined later in index.html, so load them after the document and
+// inline game script finish. The guard keeps equipment.js safe for Node tests.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        const script = document.createElement('script');
-        script.src = 'mastery.js';
-        document.body.appendChild(script);
+        ['mastery.js', 'ui.js'].forEach(src => {
+            const script = document.createElement('script');
+            script.src = src;
+            document.body.appendChild(script);
+        });
     });
 }
