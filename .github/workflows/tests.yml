@@ -17,8 +17,16 @@ jobs:
         with:
           node-version: 22
 
+      - name: Check browser extension syntax
+        run: |
+          node --check mastery.js
+          node --check ui.js
+
       - name: Run playthrough tests
         run: node tests/playthrough.js
 
       - name: Run UI copy regression
         run: node tests/ui-copy.js
+
+      - name: Run UI architecture regression
+        run: node tests/ui-layout.js
