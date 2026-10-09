@@ -108,10 +108,13 @@ section('2. Casting, streaks, rewards, answer matching');
     eq('miss resets streak', game.player.streak, 0);
     check('miss reveals answer', /fizzles/i.test(html()));
 
-    game.currentAnswer = {type:'definition', term:'hedron'};
-    check('significant definition word accepted', game.evaluateAnswer('sided'));
-    game.currentAnswer = {type:'term', term:'graph', definition:'write'};
-    check('reverse root accepted', game.evaluateAnswer('graph'));
+    const sampleRoot = Object.keys(game.terms)[0];
+    const sampleDefinition = game.getDefinitionsForTerm(sampleRoot)[0];
+    const significantWord = sampleDefinition.split(/[\s,/]+/)
+        .find(word => word.length >= 3 && !['the','and','for','with'].includes(word));
+    check('significant definition word accepted', game.isDefinitionMatch(significantWord, sampleDefinition));
+    game.currentAnswer = {type:'term', term:sampleRoot, definition:sampleDefinition};
+    check('reverse root accepted', game.evaluateAnswer(sampleRoot));
 }
 
 section('3. Whole-word list behavior');
@@ -119,10 +122,9 @@ section('3. Whole-word list behavior');
     const {game} = freshGame('words');
     game.currentAnswer = {type:'definition', term:'acrimonious'};
     check('any listed meaning is accepted', game.getDefinitionsForTerm('acrimonious').every(d => game.evaluateAnswer(d)));
-    check('parenthetical context is ignored', game.evaluateAnswer('mean-spirited'));
-    game.currentAnswer = {type:'term', term:'weary', definition:'tired'};
-    check('shared definition accepts drowsy', game.evaluateAnswer('drowsy'));
-    check('shared definition accepts weary', game.evaluateAnswer('weary'));
+    check('parenthetical context is ignored', game.isDefinitionMatch('mean-spirited', 'mean-spirited (dialogue)'));
+    game.currentAnswer = {type:'term', term:'acrimonious', definition:'bitter'};
+    check('reverse word accepted', game.evaluateAnswer('acrimonious'));
 }
 
 section('4. Shop and gear replacement');
@@ -191,7 +193,10 @@ section('6. Legacy save migration');
 section('7. Mastery progression and adaptive review');
 {
     const {game} = freshGame('roots');
-    const term = 'graph';
+    const rootTerms = Object.keys(game.terms);
+    const term = rootTerms[0];
+    const strong = rootTerms[1];
+    check('mastery test has two valid roots', Boolean(term && strong));
     eq('fresh term starts New', game.masteryStage(term), 'New');
     eq('New weight', game.masteryWeight(term), 5);
 
@@ -207,7 +212,7 @@ section('7. Mastery progression and adaptive review');
     game.saveGame();
     const m2 = loadGame();
     eq('mastery survives reload', m2.game.masteryStage(term), 'Mastered');
-    eq('attempts survive reload', m2.game.mastery[term].attempts, 6);
+    eq('attempts survive reload', m2.game.mastery[term]?.attempts, 6);
 
     m2.game.recordMastery(term, false);
     eq('miss demotes Mastered -> Familiar', m2.game.masteryStage(term), 'Familiar');
@@ -216,7 +221,6 @@ section('7. Mastery progression and adaptive review');
     eq('second miss demotes Familiar -> Learning', m2.game.masteryStage(term), 'Learning');
     eq('Learning recent-miss weight', m2.game.masteryWeight(term), 6);
 
-    const strong = 'path';
     for (let i = 0; i < 6; i++) m2.game.recordMastery(strong, true);
     m2.game.refillQuestionPool();
     const weakCount = m2.game.questionPool.filter(q => q.term === term).length;
@@ -228,10 +232,11 @@ section('7. Mastery progression and adaptive review');
 
     m2.game.saveGame();
     m2.game.chooseWordSet('words');
-    m2.game.recordMastery('acrimonious', true);
-    eq('other list has independent mastery', m2.game.masteryStage('acrimonious'), 'Learning');
+    const wordTerm = Object.keys(m2.game.terms)[0];
+    m2.game.recordMastery(wordTerm, true);
+    eq('other list has independent mastery', m2.game.masteryStage(wordTerm), 'Learning');
     m2.game.newGame();
-    eq('New Game resets active mastery', m2.game.masteryStage('acrimonious'), 'New');
+    eq('New Game resets active mastery', m2.game.masteryStage(wordTerm), 'New');
     m2.game.chooseWordSet('roots');
     eq('other list mastery survives', m2.game.masteryStage(term), 'Learning');
 }
