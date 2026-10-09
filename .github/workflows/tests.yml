@@ -21,6 +21,7 @@ jobs:
         run: |
           node --check mastery.js
           node --check ui.js
+          node --check ui-navigation.js
 
       - name: Run playthrough tests
         run: node tests/playthrough.js
@@ -30,3 +31,6 @@ jobs:
 
       - name: Run UI architecture regression
         run: node tests/ui-layout.js
+
+      - name: Run UI navigation regression
+        run: node tests/ui-navigation.js
