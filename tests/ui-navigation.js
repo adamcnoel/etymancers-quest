@@ -28,17 +28,19 @@ global.document = {
 
 class EtymancerGame {
     constructor() {
-        this.wordSet = {id: 'roots'};
+        this.wordSet = {id: 'roots', name: 'Roots & Affixes'};
+        this.player = {level: 1};
         this.currentQuestion = 'What does arc mean?';
         this.currentAnswer = {type: 'definition', term: 'arc'};
         this.questionsAnswered = 7;
         this.duel = null;
         this.newGameCalls = 0;
     }
+    escapeHtml(value) { return String(value); }
     setScreen(name) { container.dataset.screen = name; }
     askQuestion() { this.questionsAnswered++; this.currentQuestion = 'NEW QUESTION'; }
     newGame() { this.newGameCalls++; this.questionsAnswered = 0; }
-    showMainMenu() { this.setScreen('menu'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Continue Casting</button>'; }
+    showMainMenu() { this.setScreen('menu'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Continue Casting</button><button>Etymancer</button><button>Arcane Emporium</button>'; }
     showSpellbookSetup() { this.setScreen('spellbook'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Continue Casting</button>'; }
     showCharacterSheet() { this.setScreen('character'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Back to Casting</button>'; }
     showShop() { this.setScreen('shop'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Back to Casting</button>'; }
@@ -46,7 +48,7 @@ class EtymancerGame {
     showPurchaseFailure() { gameArea.innerHTML = '<button>Back</button>'; }
     showHelp() { this.setScreen('support'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Back to Casting</button>'; }
     showResetConfirm() { gameArea.innerHTML = '<button onclick="newGame(); game.showMainMenu()">Reset Progress</button>'; }
-    selectSpellbookForSetup(setId) { this.wordSet = {id: setId}; }
+    selectSpellbookForSetup(setId) { this.wordSet = {id: setId, name: 'Roots & Affixes'}; }
 }
 
 const game = new EtymancerGame();
@@ -54,7 +56,9 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'ui-navigation.js'), '
 new Function('EtymancerGame', 'game', 'document', source)(EtymancerGame, game, global.document);
 
 let failed = 0;
+let checks = 0;
 function check(label, condition) {
+    checks++;
     if (condition) console.log(`PASS: ${label}`);
     else { failed++; console.error(`FAIL: ${label}`); }
 }
@@ -76,14 +80,19 @@ check('resume preserves spell counter', game.questionsAnswered === originalCount
 check('resume preserves typed answer', input.value === 'typed answer');
 check('resume returns to gameplay screen', container.dataset.screen === 'gameplay');
 
-// New Game should clear any suspended cast and land in the Grimoire flow.
+// New Game should clear any suspended cast and land on a fresh-game main menu.
 container.dataset.screen = 'menu';
 answerVisible = false;
 game.showResetConfirm();
 check('reset confirmation uses UI reset workflow', gameArea.innerHTML.includes('game.startNewGameFromUi()'));
 game.startNewGameFromUi();
 check('new game resets game state once', game.newGameCalls === 1);
-check('new game lands in Grimoire flow', container.dataset.screen === 'spellbook');
+check('new game lands on main menu', container.dataset.screen === 'menu');
+check('fresh main menu offers Begin Casting', gameArea.innerHTML.includes('Begin Casting'));
+check('fresh main menu offers Grimoire', gameArea.innerHTML.includes('Grimoire'));
+check('fresh main menu hides Etymancer link', !gameArea.innerHTML.includes('>Etymancer<'));
+check('fresh main menu hides Emporium link', !gameArea.innerHTML.includes('Emporium'));
+check('fresh main menu does not say Continue Casting', !gameArea.innerHTML.includes('Continue Casting'));
 
-console.log(`\nRESULT: ${11 - failed} checks passed, ${failed} failed`);
+console.log(`\nRESULT: ${checks - failed} checks passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
