@@ -8,7 +8,6 @@
     if (proto.__uiShellInstalled) return;
     proto.__uiShellInstalled = true;
 
-    const originalShowStart = proto.showStart;
     const originalAskQuestion = proto.askQuestion;
     const originalShowCastResult = proto.showCastResult;
     const originalOfferBossFight = proto.offerBossFight;
@@ -18,7 +17,6 @@
     const originalShowShop = proto.showShop;
     const originalShowPurchaseResult = proto.showPurchaseResult;
     const originalShowPurchaseFailure = proto.showPurchaseFailure;
-    const originalShowHelp = proto.showHelp;
     const originalUpdateStats = proto.updateStats;
 
     let grimoireDirection = 'forward';
@@ -68,8 +66,7 @@
             nav.setAttribute('aria-label', 'Game navigation');
             nav.innerHTML = `
                 <button type="button" onclick="game.showMainMenu()">Menu</button>
-                <button type="button" onclick="game.showSpellbookSetup()">Spellbook</button>
-                <button type="button" onclick="game.showCharacterSheet()">Etymancer</button>
+                <button type="button" onclick="game.showSpellbookSetup()">Grimoire</button>
                 <button type="button" onclick="game.showShop()">Emporium</button>`;
             main.appendChild(nav);
         }
@@ -113,16 +110,16 @@
                     </div>
                     <div class="menu-actions">
                         <button class="primary-action" onclick="game.askQuestion()">Continue Casting</button>
-                        <button onclick="game.showSpellbookSetup()">Spellbook &amp; Grimoire</button>
+                        <button onclick="game.showSpellbookSetup()">Grimoire</button>
                         <button onclick="game.showCharacterSheet()">Etymancer</button>
                         <button onclick="game.showShop()">Arcane Emporium</button>
                         <button onclick="game.showHelp()">How to Play</button>
                         <button onclick="game.showResetConfirm()">New Game</button>
                     </div>` : `
-                    <div class="screen-title">Choose a spellbook to begin.</div>
+                    <div class="screen-title">Choose a Grimoire to begin.</div>
                     <div class="examples">Review the material before casting, then enter the dungeon when you're ready.</div>
                     <div class="menu-actions">
-                        <button class="primary-action" onclick="game.showSpellbookSetup()">Choose Spellbook</button>
+                        <button class="primary-action" onclick="game.showSpellbookSetup()">Choose Grimoire</button>
                         <button onclick="game.showHelp()">How to Play</button>
                     </div>`}
             </section>`;
@@ -135,7 +132,7 @@
             <section class="screen-section">
                 <div class="screen-kicker">NEW GAME</div>
                 <div class="screen-title">Reset ${safe(this.wordSet.name)}?</div>
-                <p>This resets level, gold, gear, mana, streak and mastery for this spellbook only.</p>
+                <p>This resets level, gold, gear, mana, streak and mastery for this Grimoire only.</p>
                 <div class="view-actions">
                     <button class="danger-action" onclick="newGame(); game.showMainMenu()">Reset Progress</button>
                     <button onclick="game.showMainMenu()">Cancel</button>
@@ -216,16 +213,12 @@
         const activeContent = this.wordSet ? `
             <section class="grimoire-panel">
                 <div class="section-heading-row">
-                    <div>
-                        <div class="screen-kicker">GRIMOIRE</div>
-                        <div class="screen-title">${safe(this.wordSet.name)}</div>
-                    </div>
+                    <div class="screen-title">${safe(this.wordSet.name)}</div>
                     <div class="segmented-control" aria-label="Grimoire review direction">
                         <button class="${grimoireDirection === 'forward' ? 'selected' : ''}" onclick="game.setGrimoireDirection('forward')">${safe(this.wordSet.termLabel)} → meaning</button>
                         <button class="${grimoireDirection === 'reverse' ? 'selected' : ''}" onclick="game.setGrimoireDirection('reverse')">meaning → ${safe(this.wordSet.termLabel)}</button>
                     </div>
                 </div>
-                <div class="examples">Review mode only. Configuring which direction the game asks is tracked separately in #10.</div>
                 <div class="grimoire-list">${this.renderGrimoireRows()}</div>
                 <div class="view-actions sticky-actions">
                     <button class="primary-action" onclick="game.askQuestion()">${this.questionsAnswered ? 'Continue Casting' : 'Begin Casting'}</button>
@@ -233,13 +226,13 @@
                 </div>
             </section>` : `
             <section class="empty-grimoire">
-                <div class="screen-title">Select a spellbook to inspect its Grimoire.</div>
+                <div class="screen-title">Choose a Grimoire to review its contents.</div>
             </section>`;
 
         gameArea.innerHTML = `
             <section class="screen-section spellbook-setup">
-                <div class="screen-kicker">SPELLBOOK SETUP</div>
-                <div class="screen-title">Choose your study material.</div>
+                <div class="screen-kicker">GRIMOIRE</div>
+                <div class="screen-title">${this.wordSet ? 'Review or change your study material.' : 'Choose your study material.'}</div>
                 <div class="spellbook-grid">${this.renderSpellbookCards()}</div>
                 ${activeContent}
             </section>`;
@@ -353,21 +346,29 @@
     };
 
     proto.showHelp = function () {
-        if (!this.wordSet) {
-            this.setScreen('support');
-            area().innerHTML = `
-                <section class="screen-section">
-                    <div class="screen-kicker">HOW TO PLAY</div>
-                    <div class="screen-title">Study words. Cast spells. Defeat bosses.</div>
-                    <p>Choose a spellbook, review its Grimoire, then answer questions to earn gold and mana. Build streaks, buy stronger gear, and fight a boss every 10 spells.</p>
-                    <div class="view-actions"><button onclick="game.showMainMenu()">Main Menu</button></div>
-                </section>`;
-            return;
-        }
-        const result = originalShowHelp.call(this);
-        area().innerHTML += `<div class="view-actions secondary-actions"><button onclick="game.showMainMenu()">Main Menu</button></div>`;
         this.setScreen('support');
-        return result;
+        area().innerHTML = `
+            <section class="screen-section">
+                <div class="screen-kicker">HOW TO PLAY</div>
+                <div class="screen-title">Study words. Cast spells. Defeat bosses.</div>
+                <p>Choose a Grimoire, review its material, then answer questions to earn gold and mana. Build streaks, buy stronger gear, and fight a boss every 10 spells.</p>
+                <div class="detail-card">
+                    <div class="detail-label">Casting</div>
+                    <div>Correct answers earn gold and mana. Wrong answers or Fizzle break your streak but reveal the answer.</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">Combos</div>
+                    <div>Consecutive correct answers raise your combo multiplier, increasing both gold and mana rewards.</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">Progression</div>
+                    <div>Use gold in the Arcane Emporium to improve your gear and mana. Every 10 spells, a boss can challenge you to a duel.</div>
+                </div>
+                <div class="view-actions">
+                    ${this.wordSet ? '<button class="primary-action" onclick="game.askQuestion()">Back to Casting</button>' : ''}
+                    <button onclick="game.showMainMenu()">Main Menu</button>
+                </div>
+            </section>`;
     };
 
     proto.updateStats = function () {
