@@ -251,7 +251,7 @@
         const summary = masterySummary();
         area().innerHTML = `
             <section class="screen-section character-sheet">
-                <div class="screen-kicker">ETY MANCER // CHARACTER SHEET</div>
+                <div class="screen-kicker">ETYMANCER // CHARACTER SHEET</div>
                 <div class="screen-title">Level ${this.player.level} ${safe(this.wordSet.name)} Etymancer</div>
                 <div class="character-grid">
                     <div class="detail-card">
