@@ -61,6 +61,10 @@
             this.mastery = {};
             this.masterySequence = 0;
 
+            // A first-time visitor has not chosen a spellbook yet. There is no
+            // per-list save key until activateWordSet() runs, so defer hydration.
+            if (!this.wordSet) return;
+
             try {
                 const saved = localStorage.getItem(this.saveKey());
                 if (saved) {
@@ -244,8 +248,11 @@
         };
 
         proto.saveGame = function () {
-            originalSaveGame.call(this);
+            // Core saveGame() also calls saveKey(), which requires a selected
+            // word list. Do nothing on the initial spellbook-picker screen.
             if (!this.wordSet) return;
+
+            originalSaveGame.call(this);
             this.ensureMastery();
 
             try {
@@ -354,13 +361,19 @@
             return result;
         };
 
-        // The current game was constructed before this file loaded, so hydrate it
-        // once now. Future word-list switches and new games use the patched hooks.
-        game.hydrateMastery();
-        game.refillQuestionPool();
-        game.saveGame();
-        game.updateStats();
-        game.appendMasterySummary();
+        // The current game was constructed before this file loaded. If a prior
+        // spellbook is active, hydrate it now; otherwise wait for the player to
+        // choose one, at which point the patched loadGame() handles everything.
+        if (game.wordSet) {
+            game.hydrateMastery();
+            game.refillQuestionPool();
+            game.saveGame();
+            game.updateStats();
+            game.appendMasterySummary();
+        } else {
+            game.mastery = {};
+            game.masterySequence = 0;
+        }
     }
 
     installMasterySystem();
