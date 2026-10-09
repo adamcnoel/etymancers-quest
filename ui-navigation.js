@@ -28,6 +28,10 @@
         return document.querySelector('.game-container');
     }
 
+    function safe(text) {
+        return game.escapeHtml ? game.escapeHtml(text) : String(text);
+    }
+
     function captureActiveCast() {
         if (suspendedCast) return;
         const container = shell();
@@ -54,6 +58,25 @@
             /onclick="game\.askQuestion\(\)"/g,
             'onclick="game.resumeCasting()"'
         );
+    }
+
+    function renderFreshMainMenu() {
+        const gameArea = area();
+        if (!gameArea || !game.wordSet || !game.player) return;
+        gameArea.innerHTML = `
+            <section class="screen-section menu-screen">
+                <div class="screen-kicker">MAIN MENU</div>
+                <div class="menu-status-card">
+                    <div class="screen-title">Your adventure is ready to begin.</div>
+                    <div>${safe(game.wordSet.name)}</div>
+                    <div class="examples">Review your Grimoire first, or begin casting when you're ready.</div>
+                </div>
+                <div class="menu-actions">
+                    <button class="primary-action" onclick="game.askQuestion()">Begin Casting</button>
+                    <button onclick="game.showSpellbookSetup()">Grimoire</button>
+                    <button onclick="game.showHelp()">How to Play</button>
+                </div>
+            </section>`;
     }
 
     proto.resumeCasting = function () {
@@ -83,13 +106,18 @@
         this.currentQuestion = null;
         this.currentAnswer = null;
         this.duel = null;
-        this.showSpellbookSetup();
+        this.showMainMenu();
     };
 
     proto.showMainMenu = function () {
         captureActiveCast();
         const result = originalShowMainMenu.call(this);
-        if (suspendedCast) wireResumeButtons();
+
+        if (suspendedCast) {
+            wireResumeButtons();
+        } else if (this.wordSet && this.player && this.questionsAnswered === 0 && !this.currentQuestion) {
+            renderFreshMainMenu();
+        }
         return result;
     };
 
