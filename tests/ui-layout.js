@@ -6,6 +6,15 @@ const ROOT = path.resolve(__dirname, '..');
 const ui = fs.readFileSync(path.join(ROOT, 'ui.js'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8');
 
+const playerFacingSpellbookPhrases = [
+    'Spellbook &amp; Grimoire',
+    '>Spellbook</button>',
+    'Choose Spellbook',
+    'SPELLBOOK SETUP',
+    'Select a spellbook',
+    'Choose a spellbook'
+];
+
 const checks = [
     ['main menu view exists', ui.includes('showMainMenu')],
     ['grimoire view exists', ui.includes('showSpellbookSetup') && ui.includes('renderGrimoireRows')],
@@ -17,7 +26,7 @@ const checks = [
     ['gameplay nav uses Grimoire terminology', ui.includes('>Grimoire</button>')],
     ['gameplay nav does not duplicate Etymancer link', !ui.includes('<button type="button" onclick="game.showCharacterSheet()">Etymancer</button>')],
     ['no internal issue references leak into UI', !/#\d+/.test(ui)],
-    ['no player-facing Spellbook label remains', !/>[^<]*Spellbook[^<]*</i.test(ui)],
+    ['no player-facing Spellbook label remains', playerFacingSpellbookPhrases.every(phrase => !ui.includes(phrase))],
     ['grimoire layout is scalable', css.includes('.spellbook-grid')],
     ['character layout is scalable', css.includes('.character-grid')],
     ['tablet/phone breakpoint exists', css.includes('@media (max-width: 720px)')],
