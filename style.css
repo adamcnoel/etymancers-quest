@@ -3,49 +3,329 @@ body {
     background-color: #1a1a1a;
     color: #00ff00;
     margin: 0;
-    padding: 20px;
+    padding: clamp(8px, 2vw, 20px);
     min-height: 100vh;
+    min-height: 100dvh;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
 .game-container {
-    max-width: 800px;
+    width: min(100%, 1000px);
+    min-height: calc(100vh - 40px);
+    min-height: calc(100dvh - 2 * clamp(8px, 2vw, 20px));
     margin: 0 auto;
     border: 2px solid #00ff00;
     background-color: #000;
-    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .game-header {
     border-bottom: 2px solid #00ff00;
-    padding: 10px;
+    padding: clamp(16px, 4vw, 32px);
     text-align: center;
     background-color: #003300;
 }
 
+.game-header h1 {
+    margin: 0;
+    font-size: clamp(1.35rem, 4vw, 2.25rem);
+}
+
 .tagline {
-    margin-top: 6px;
-    font-size: 0.85em;
+    margin-top: 8px;
+    font-size: 0.9em;
     color: #ffff00;
     letter-spacing: 1px;
 }
 
 .game-content {
-    display: flex;
-    min-height: 400px;
+    flex: 1;
+    min-height: 0;
+    display: block;
 }
 
-.stats-panel {
-    width: 250px;
-    border-right: 2px solid #00ff00;
-    padding: 20px;
-    background-color: #001100;
+/* The original stats panel remains in the DOM as a compatibility/data hook,
+   but the redesigned UI renders stats in the gameplay HUD and character view. */
+.stats-panel,
+.game-footer {
+    display: none;
 }
 
 .main-panel {
-    flex: 1;
-    padding: 20px;
+    min-height: 100%;
+    padding: clamp(16px, 4vw, 32px);
+    display: flex;
+    flex-direction: column;
 }
 
+#game-area {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Only the main menu carries the large branded header. */
+.game-container:not([data-screen="menu"]) .game-header {
+    display: none;
+}
+
+.screen-section {
+    width: 100%;
+}
+
+.screen-kicker {
+    color: #ffff00;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    margin-bottom: 8px;
+}
+
+.screen-title {
+    color: #00ff00;
+    font-size: clamp(1.1rem, 3vw, 1.55rem);
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.menu-screen {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.menu-status-card,
+.detail-card,
+.grimoire-panel,
+.empty-grimoire {
+    border: 1px solid #006600;
+    background: #001100;
+    padding: clamp(14px, 3vw, 22px);
+}
+
+.menu-actions,
+.view-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.menu-actions button,
+.view-actions button {
+    margin: 0;
+}
+
+.primary-action {
+    background-color: #005500;
+    border-color: #66ff66;
+    font-weight: bold;
+}
+
+.danger-action {
+    color: #ff9999;
+    border-color: #ff6666;
+    background: #330000;
+}
+
+/* --- Compact gameplay HUD --- */
+.compact-hud {
+    display: none;
+    width: 100%;
+    margin: 0 0 18px;
+    padding: 10px 12px;
+    border: 1px solid #006600;
+    background: #001100;
+    color: #00ff00;
+    text-align: left;
+    font-family: 'Courier New', monospace;
+    gap: 8px 14px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.game-container[data-screen="gameplay"] .compact-hud {
+    display: flex;
+}
+
+.hud-primary {
+    color: #ffff00;
+    font-weight: bold;
+}
+
+.hud-open {
+    margin-left: auto;
+    color: #ffff00;
+}
+
+.gameplay-nav {
+    display: none;
+    border-top: 1px solid #006600;
+    margin-top: 24px;
+    padding-top: 12px;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.game-container[data-screen="gameplay"] .gameplay-nav {
+    display: flex;
+}
+
+.gameplay-nav button {
+    flex: 1 1 120px;
+    margin: 0;
+}
+
+/* --- Spellbook / Grimoire --- */
+.spellbook-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0 24px;
+}
+
+.spellbook-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 5px;
+    min-height: 120px;
+    margin: 0;
+    padding: 14px;
+}
+
+.spellbook-card.active {
+    background-color: #004400;
+    border-color: #ffff00;
+}
+
+.spellbook-name {
+    color: #ffff00;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.spellbook-meta {
+    font-size: 0.82rem;
+}
+
+.spellbook-blurb {
+    color: #aaffaa;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.grimoire-panel {
+    padding-bottom: 0;
+}
+
+.section-heading-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.segmented-control {
+    display: flex;
+    gap: 0;
+    flex-wrap: wrap;
+}
+
+.segmented-control button {
+    margin: 0;
+    border-radius: 0;
+}
+
+.segmented-control .selected {
+    background: #005500;
+    color: #ffff00;
+}
+
+.grimoire-list {
+    margin-top: 16px;
+    border-top: 1px solid #006600;
+}
+
+.grimoire-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 0.8fr) minmax(180px, 2fr) auto;
+    gap: 14px;
+    align-items: start;
+    padding: 12px 0;
+    border-bottom: 1px solid #003300;
+}
+
+.grimoire-prompt {
+    color: #ffff00;
+    font-weight: bold;
+}
+
+.grimoire-answer {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.grimoire-examples {
+    color: #aaffaa;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.mastery-chip {
+    border: 1px solid #006600;
+    padding: 3px 7px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.mastery-chip[data-stage="Mastered"] { color: #00ff00; }
+.mastery-chip[data-stage="Familiar"] { color: #ffff00; }
+.mastery-chip[data-stage="Learning"] { color: #ffcc66; }
+.mastery-chip[data-stage="New"] { color: #aaaaaa; }
+
+.sticky-actions {
+    position: sticky;
+    bottom: 0;
+    margin-left: -1px;
+    margin-right: -1px;
+    padding: 12px 0 14px;
+    background: #001100;
+    border-top: 1px solid #006600;
+}
+
+/* --- Character sheet --- */
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.detail-card {
+    min-height: 150px;
+}
+
+.detail-label {
+    color: #ffff00;
+    margin-bottom: 10px;
+}
+
+.detail-value {
+    font-size: 1.15rem;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.secondary-actions {
+    border-top: 1px solid #003300;
+    padding-top: 14px;
+}
+
+/* --- Existing game elements --- */
 .stats-title {
     text-align: center;
     margin-bottom: 15px;
@@ -64,32 +344,37 @@ input[type="text"] {
     background-color: #000;
     color: #00ff00;
     border: 1px solid #00ff00;
-    padding: 8px;
+    padding: 10px;
     font-family: 'Courier New', monospace;
-    /* 16px keeps iOS Safari from auto-zooming when the field is focused. */
     font-size: 16px;
-    width: 200px;
-    max-width: 100%;
-    box-sizing: border-box;
+    width: min(320px, 100%);
 }
 
 button {
     background-color: #003300;
     color: #00ff00;
     border: 1px solid #00ff00;
-    padding: 8px 16px;
+    padding: 9px 14px;
     font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
     cursor: pointer;
     margin: 5px;
 }
 
-button:hover {
+button:hover,
+button:focus-visible {
     background-color: #005500;
 }
 
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid #ffff00;
+    outline-offset: 2px;
+}
+
 .shop-item {
-    margin: 5px 0;
-    padding: 5px;
+    margin: 6px 0;
+    padding: 8px;
     cursor: pointer;
 }
 
@@ -97,13 +382,8 @@ button:hover {
     background-color: #003300;
 }
 
-.affordable {
-    color: #00ff00;
-}
-
-.unaffordable {
-    color: #ff6666;
-}
+.affordable { color: #00ff00; }
+.unaffordable { color: #ff6666; }
 
 .question-counter {
     color: #ffff00;
@@ -115,71 +395,59 @@ button:hover {
     font-weight: bold;
 }
 
-.correct {
-    color: #00ff00;
-}
-
-.incorrect {
-    color: #ff6666;
-}
-
-.game-footer {
-    border-top: 2px solid #00ff00;
-    padding: 10px;
-    text-align: center;
-    background-color: #003300;
-}
+.correct { color: #00ff00; }
+.incorrect { color: #ff6666; }
 
 .examples {
     margin-top: 8px;
     font-size: 0.9em;
     color: #ffff00;
+    line-height: 1.45;
 }
 
-/* --- Mobile layout --- */
-@media (max-width: 600px) {
-    body {
-        padding: 8px;
-    }
-
-    .game-header h1 {
-        font-size: 1.1em;
-        margin: 6px 0;
-        white-space: nowrap;
-    }
-
-    /* Stack the stats above the main panel instead of a fixed side column. */
-    .game-content {
-        flex-direction: column;
-        min-height: 0;
-    }
-
-    /* Full width, and lay the stats out as a compact wrapped row
-       rather than a tall fixed side column. */
-    .stats-panel {
-        width: auto;
-        border-right: none;
-        border-bottom: 2px solid #00ff00;
-        padding: 12px 16px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 16px;
-    }
-
-    .stats-title {
-        flex-basis: 100%;
-        margin-bottom: 6px;
-    }
-
-    .stat-line {
-        margin: 0;
-    }
-
+/* --- Tablet / phone layouts --- */
+@media (max-width: 720px) {
     .main-panel {
         padding: 16px;
     }
 
-    /* Full-width input and buttons are easier to tap and avoid overflow. */
+    .spellbook-grid,
+    .character-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-heading-row {
+        flex-direction: column;
+    }
+
+    .segmented-control {
+        width: 100%;
+    }
+
+    .segmented-control button {
+        flex: 1 1 180px;
+    }
+
+    .grimoire-row {
+        grid-template-columns: 1fr auto;
+        gap: 6px 10px;
+    }
+
+    .grimoire-answer {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .mastery-chip {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .hud-open {
+        margin-left: 0;
+        width: 100%;
+    }
+
     .input-area input[type="text"] {
         display: block;
         width: 100%;
@@ -189,11 +457,63 @@ button:hover {
     .input-area button {
         display: block;
         width: 100%;
-        margin: 6px 0;
+        margin: 7px 0;
         padding: 12px;
     }
 
-    .game-footer button {
-        margin: 4px 2px;
+    .menu-actions,
+    .view-actions {
+        flex-direction: column;
+    }
+
+    .menu-actions button,
+    .view-actions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    body {
+        padding: 6px;
+    }
+
+    .game-container {
+        min-height: calc(100dvh - 12px);
+    }
+
+    .game-header {
+        padding: 14px 8px;
+    }
+
+    .game-header h1 {
+        font-size: 1.05rem;
+        white-space: nowrap;
+    }
+
+    .tagline {
+        font-size: 0.72rem;
+    }
+
+    .main-panel {
+        padding: 12px;
+    }
+
+    .compact-hud {
+        font-size: 0.78rem;
+        gap: 6px 10px;
+    }
+
+    .gameplay-nav button {
+        flex: 1 1 calc(50% - 6px);
+        font-size: 0.76rem;
+        padding: 9px 6px;
+    }
+
+    .spellbook-card {
+        min-height: 0;
+    }
+
+    .segmented-control button {
+        flex-basis: 100%;
     }
 }
