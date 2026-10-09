@@ -36,11 +36,11 @@ const EQUIPMENT = {
 
 // Browser-only extensions depend on the EtymancerGame class and global game
 // instance defined later in index.html. Load them sequentially after the inline
-// game script so the mastery model is fully installed before the UI consumes it.
+// game script so each layer can safely build on the previous one.
 // The guard keeps equipment.js safe for the Node-based playthrough harness.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        const extensions = ['mastery.js', 'ui.js'];
+        const extensions = ['mastery.js', 'ui.js', 'ui-navigation.js'];
         const loadNext = index => {
             if (index >= extensions.length) return;
             const script = document.createElement('script');
