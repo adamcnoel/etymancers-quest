@@ -35,14 +35,19 @@ const EQUIPMENT = {
 };
 
 // Browser-only extensions depend on the EtymancerGame class and global game
-// instance defined later in index.html, so load them after the document and
-// inline game script finish. The guard keeps equipment.js safe for Node tests.
+// instance defined later in index.html. Load them sequentially after the inline
+// game script so the mastery model is fully installed before the UI consumes it.
+// The guard keeps equipment.js safe for the Node-based playthrough harness.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        ['mastery.js', 'ui.js'].forEach(src => {
+        const extensions = ['mastery.js', 'ui.js'];
+        const loadNext = index => {
+            if (index >= extensions.length) return;
             const script = document.createElement('script');
-            script.src = src;
+            script.src = extensions[index];
+            script.onload = () => loadNext(index + 1);
             document.body.appendChild(script);
-        });
+        };
+        loadNext(0);
     });
 }
