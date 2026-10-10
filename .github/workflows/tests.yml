@@ -46,3 +46,6 @@ jobs:
 
       - name: Run debug tools regression
         run: node tests/debug-tools.js
+
+      - name: Run cache-busting regression
+        run: node tests/cache-busting.js
