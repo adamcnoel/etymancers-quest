@@ -22,6 +22,7 @@ jobs:
           node --check mastery.js
           node --check mastery-spacing.js
           node --check ui.js
+          node --check grimoire-status.js
           node --check boss-flow.js
           node --check flow-state.js
           node --check ui-navigation.js
@@ -48,6 +49,9 @@ jobs:
 
       - name: Run Inventory UI regression
         run: node tests/inventory-ui.js
+
+      - name: Run Grimoire save-status regression
+        run: node tests/grimoire-status.js
 
       - name: Run debug tools regression
         run: node tests/debug-tools.js
