@@ -1,7 +1,7 @@
 // Navigation-state fixes layered on top of the modular UI shell.
-// Leaving an unanswered cast or an in-progress duel for Menu / Grimoire /
-// Emporium / Character Sheet should suspend that exact encounter, not consume
-// a new question or abandon the boss fight.
+// Leaving any gameplay state for Menu / Grimoire / Emporium / Character Sheet /
+// Help / Inventory should suspend that exact state until the player explicitly
+// advances it.
 (function () {
     if (typeof EtymancerGame === 'undefined' || typeof game === 'undefined') return;
 
@@ -33,7 +33,7 @@
         return game.escapeHtml ? game.escapeHtml(text) : String(text);
     }
 
-    function captureActiveEncounter() {
+    function captureGameplayState() {
         if (suspendedEncounter) return;
         const container = shell();
         const gameArea = area();
@@ -41,22 +41,18 @@
 
         if (!gameArea) return;
 
-        // An active duel is authoritative gameplay state. Do not depend on the
-        // screen marker being perfectly synchronized before preserving it.
+        // A duel is authoritative gameplay state even if another UI layer has
+        // temporarily left the screen marker stale. Otherwise, any screen marked
+        // gameplay is resumable: unanswered cast, cast result, boss offer, duel
+        // outcome, victory, or defeat.
         const activeDuel = !!game.duel;
-        const activeCast = !!(
-            container &&
-            container.dataset.screen === 'gameplay' &&
-            input &&
-            !game.duel
+        const activeGameplay = !!(
+            container && container.dataset.screen === 'gameplay'
         );
-
-        // Result screens and the boss-offer screen have no active duel and no
-        // unresolved normal-cast input, so they intentionally do not suspend.
-        if (!activeDuel && !activeCast) return;
+        if (!activeDuel && !activeGameplay) return;
 
         suspendedEncounter = {
-            kind: activeDuel ? 'duel' : 'cast',
+            kind: activeDuel ? 'duel' : 'gameplay',
             html: gameArea.innerHTML,
             inputValue: input ? (input.value || '') : '',
             currentQuestion: game.currentQuestion,
@@ -65,6 +61,12 @@
             duel: activeDuel ? {...game.duel} : null
         };
     }
+
+    // Later-loaded UI layers (currently Inventory) can use the same navigation
+    // contract without duplicating snapshot logic.
+    proto.suspendGameplayState = function () {
+        captureGameplayState();
+    };
 
     function wireResumeButtons() {
         const gameArea = area();
@@ -126,7 +128,7 @@
     };
 
     proto.showMainMenu = function () {
-        captureActiveEncounter();
+        captureGameplayState();
         const result = originalShowMainMenu.call(this);
 
         if (suspendedEncounter) {
@@ -138,21 +140,21 @@
     };
 
     proto.showSpellbookSetup = function () {
-        captureActiveEncounter();
+        captureGameplayState();
         const result = originalShowSpellbookSetup.call(this);
         if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showCharacterSheet = function () {
-        captureActiveEncounter();
+        captureGameplayState();
         const result = originalShowCharacterSheet.call(this);
         if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showShop = function () {
-        captureActiveEncounter();
+        captureGameplayState();
         const result = originalShowShop.call(this);
         if (suspendedEncounter) wireResumeButtons();
         return result;
@@ -171,7 +173,7 @@
     };
 
     proto.showHelp = function () {
-        captureActiveEncounter();
+        captureGameplayState();
         const result = originalShowHelp.call(this);
         if (suspendedEncounter) wireResumeButtons();
         return result;
