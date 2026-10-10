@@ -42,6 +42,7 @@ const expected = [
     'grimoire-status.js',
     'grimoire-sort.js',
     'boss-flow.js',
+    'cast-copy.js',
     'flow-state.js',
     'ui-navigation.js',
     'inventory.js',
