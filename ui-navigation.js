@@ -1,6 +1,7 @@
 // Navigation-state fixes layered on top of the modular UI shell.
-// Leaving an unanswered casting prompt for Menu / Grimoire / Emporium /
-// Character Sheet should suspend that exact prompt, not consume a new one.
+// Leaving an unanswered cast or an in-progress duel for Menu / Grimoire /
+// Emporium / Character Sheet should suspend that exact encounter, not consume
+// a new question or abandon the boss fight.
 (function () {
     if (typeof EtymancerGame === 'undefined' || typeof game === 'undefined') return;
 
@@ -18,7 +19,7 @@
     const originalShowResetConfirm = proto.showResetConfirm;
     const originalSelectSpellbookForSetup = proto.selectSpellbookForSetup;
 
-    let suspendedCast = null;
+    let suspendedEncounter = null;
 
     function area() {
         return document.getElementById('game-area');
@@ -32,22 +33,36 @@
         return game.escapeHtml ? game.escapeHtml(text) : String(text);
     }
 
-    function captureActiveCast() {
-        if (suspendedCast) return;
+    function captureActiveEncounter() {
+        if (suspendedEncounter) return;
         const container = shell();
         const gameArea = area();
         const input = document.getElementById('answer-input');
 
-        // Only suspend an unresolved normal casting prompt. Result screens and
-        // other gameplay states should continue through their normal workflow.
-        if (!container || container.dataset.screen !== 'gameplay' || !gameArea || !input || game.duel) return;
+        if (!gameArea) return;
 
-        suspendedCast = {
+        // An active duel is authoritative gameplay state. Do not depend on the
+        // screen marker being perfectly synchronized before preserving it.
+        const activeDuel = !!game.duel;
+        const activeCast = !!(
+            container &&
+            container.dataset.screen === 'gameplay' &&
+            input &&
+            !game.duel
+        );
+
+        // Result screens and the boss-offer screen have no active duel and no
+        // unresolved normal-cast input, so they intentionally do not suspend.
+        if (!activeDuel && !activeCast) return;
+
+        suspendedEncounter = {
+            kind: activeDuel ? 'duel' : 'cast',
             html: gameArea.innerHTML,
-            inputValue: input.value || '',
+            inputValue: input ? (input.value || '') : '',
             currentQuestion: game.currentQuestion,
             currentAnswer: game.currentAnswer,
-            questionsAnswered: game.questionsAnswered
+            questionsAnswered: game.questionsAnswered,
+            duel: activeDuel ? {...game.duel} : null
         };
     }
 
@@ -80,13 +95,14 @@
     }
 
     proto.resumeCasting = function () {
-        if (!suspendedCast) return this.askQuestion();
+        if (!suspendedEncounter) return this.askQuestion();
 
-        const snapshot = suspendedCast;
-        suspendedCast = null;
+        const snapshot = suspendedEncounter;
+        suspendedEncounter = null;
         this.currentQuestion = snapshot.currentQuestion;
         this.currentAnswer = snapshot.currentAnswer;
         this.questionsAnswered = snapshot.questionsAnswered;
+        this.duel = snapshot.duel ? {...snapshot.duel} : null;
 
         const gameArea = area();
         if (!gameArea) return;
@@ -101,7 +117,7 @@
     };
 
     proto.startNewGameFromUi = function () {
-        suspendedCast = null;
+        suspendedEncounter = null;
         this.newGame();
         this.currentQuestion = null;
         this.currentAnswer = null;
@@ -110,10 +126,10 @@
     };
 
     proto.showMainMenu = function () {
-        captureActiveCast();
+        captureActiveEncounter();
         const result = originalShowMainMenu.call(this);
 
-        if (suspendedCast) {
+        if (suspendedEncounter) {
             wireResumeButtons();
         } else if (this.wordSet && this.player && this.questionsAnswered === 0 && !this.currentQuestion) {
             renderFreshMainMenu();
@@ -122,42 +138,42 @@
     };
 
     proto.showSpellbookSetup = function () {
-        captureActiveCast();
+        captureActiveEncounter();
         const result = originalShowSpellbookSetup.call(this);
-        if (suspendedCast) wireResumeButtons();
+        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showCharacterSheet = function () {
-        captureActiveCast();
+        captureActiveEncounter();
         const result = originalShowCharacterSheet.call(this);
-        if (suspendedCast) wireResumeButtons();
+        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showShop = function () {
-        captureActiveCast();
+        captureActiveEncounter();
         const result = originalShowShop.call(this);
-        if (suspendedCast) wireResumeButtons();
+        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showPurchaseResult = function (message) {
         const result = originalShowPurchaseResult.call(this, message);
-        if (suspendedCast) wireResumeButtons();
+        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showPurchaseFailure = function (cost) {
         const result = originalShowPurchaseFailure.call(this, cost);
-        if (suspendedCast) wireResumeButtons();
+        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showHelp = function () {
-        captureActiveCast();
+        captureActiveEncounter();
         const result = originalShowHelp.call(this);
-        if (suspendedCast) wireResumeButtons();
+        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
@@ -174,7 +190,7 @@
     };
 
     proto.selectSpellbookForSetup = function (setId) {
-        if (this.wordSet && this.wordSet.id !== setId) suspendedCast = null;
+        if (this.wordSet && this.wordSet.id !== setId) suspendedEncounter = null;
         return originalSelectSpellbookForSetup.call(this, setId);
     };
 })();
