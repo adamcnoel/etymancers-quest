@@ -113,6 +113,32 @@ check('duel resume restores channel armed state', game.duel?.channelArmed === tr
 check('duel resume preserves typed duel answer', input.value === 'duel answer');
 check('duel resume keeps spell counter at 10', game.questionsAnswered === 10);
 
+// Reproduce the debug-start path: a duel is authoritative even if a UI layer
+// has left the screen marker stale. This mirrors Cast Spell 1 -> Debug Start
+// Boss Duel -> Grimoire -> Back to Casting.
+container.dataset.screen = 'menu';
+answerVisible = true;
+input.value = 'debug duel answer';
+game.questionsAnswered = 1;
+game.currentQuestion = "What root means 'old'?";
+game.currentAnswer = {type: 'term', term: 'paleo', definition: 'old'};
+game.duel = {
+    bossName: 'Debugging Wyrm', bossMaxHp: 95, bossHp: 95,
+    bossHit: 18, playerMaxHp: 90, playerHp: 90,
+    duelStreak: 0, channelArmed: false
+};
+gameArea.innerHTML = '<div>=== SPELL DUEL: Debugging Wyrm ===</div><input id="answer-input">';
+const debugDuelHtml = gameArea.innerHTML;
+
+game.showSpellbookSetup();
+check('debug-started duel detour rewires Back to Casting', gameArea.innerHTML.includes('game.resumeCasting()'));
+check('debug-started duel detour keeps spell count at 1', game.questionsAnswered === 1);
+game.resumeCasting();
+check('debug-started duel resumes exact duel markup', gameArea.innerHTML === debugDuelHtml);
+check('debug-started duel remains active', game.duel?.bossName === 'Debugging Wyrm');
+check('debug-started duel does not advance to spell 2', game.questionsAnswered === 1);
+check('debug-started duel restores typed answer', input.value === 'debug duel answer');
+
 // New Game should clear any suspended encounter and land on a fresh-game main menu.
 container.dataset.screen = 'menu';
 answerVisible = false;
