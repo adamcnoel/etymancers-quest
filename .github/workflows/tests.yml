@@ -25,6 +25,7 @@ jobs:
           node --check ui-navigation.js
           node --check inventory.js
           node --check debug.js
+          node --check boss-flow.js
 
       - name: Run playthrough tests
         run: node tests/playthrough.js
@@ -49,3 +50,6 @@ jobs:
 
       - name: Run cache-busting regression
         run: node tests/cache-busting.js
+
+      - name: Run boss transition regression
+        run: node tests/boss-transition.js
