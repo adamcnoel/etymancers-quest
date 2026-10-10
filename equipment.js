@@ -49,6 +49,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             'boss-flow.js',
             'cast-copy.js',
             'flow-state.js',
+            'duel-copy.js',
             'ui-navigation.js',
             'inventory.js',
             'debug.js'
