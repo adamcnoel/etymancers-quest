@@ -25,6 +25,7 @@ jobs:
           node --check grimoire-status.js
           node --check grimoire-sort.js
           node --check boss-flow.js
+          node --check cast-copy.js
           node --check flow-state.js
           node --check ui-navigation.js
           node --check inventory.js
@@ -38,6 +39,9 @@ jobs:
 
       - name: Run UI copy regression
         run: node tests/ui-copy.js
+
+      - name: Run cast copy regression
+        run: node tests/cast-copy.js
 
       - name: Run UI architecture regression
         run: node tests/ui-layout.js
