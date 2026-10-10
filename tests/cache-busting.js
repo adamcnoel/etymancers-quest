@@ -46,6 +46,8 @@ const expected = [
     'flow-state.js',
     'duel-copy.js',
     'ui-navigation.js',
+    'bosses.js',
+    'boss-campaign.js',
     'inventory.js',
     'debug.js'
 ];
