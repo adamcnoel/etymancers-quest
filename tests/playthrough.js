@@ -6,12 +6,14 @@ const ROOT = path.resolve(__dirname, '..');
 
 let store = {};
 const els = {};
+const container = {dataset: {screen: 'menu'}};
 const ID_LIST = ['word-set','level','gold','mana','max-mana','streak','intelligence',
     'strength','armor','weapon','game-area','answer-input','new-game-btn'];
 
 function resetDom() {
+    container.dataset.screen = 'menu';
     ID_LIST.forEach(id => els[id] = {
-        textContent:'', innerHTML:'', value:'', focus(){}, onclick:null,
+        textContent:'', innerHTML:'', value:'', focus(){ this.focused = true; }, focused:false, onclick:null,
         querySelector(){ return null; }, appendChild(){}, parentNode:null
     });
 }
@@ -19,10 +21,10 @@ resetDom();
 const timers = [];
 global.document = {
     getElementById: id => els[id] || null,
-    querySelector: () => null,
+    querySelector: selector => selector === '.game-container' ? container : null,
     createElement: () => ({
         textContent:'', innerHTML:'', className:'', querySelector(){ return null; },
-        appendChild(){}, remove(){}
+        appendChild(){}, remove(){}, setAttribute(){}
     })
 };
 global.localStorage = {
@@ -36,11 +38,19 @@ function loadGame() {
     const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
     const inline = html.match(/<script>([\s\S]*?)<\/script>/g).pop()
         .replace(/^<script>/, '').replace(/<\/script>$/, '');
+    const extensions = [
+        'mastery.js',
+        'mastery-spacing.js',
+        'ui.js',
+        'boss-flow.js',
+        'flow-state.js',
+        'ui-navigation.js',
+        'inventory.js'
+    ];
     const src = ['roots.js','words.js','equipment.js']
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline
-        + '\n' + fs.readFileSync(path.join(ROOT, 'mastery.js'), 'utf8')
-        + '\n' + fs.readFileSync(path.join(ROOT, 'mastery-spacing.js'), 'utf8')
+        + '\n' + extensions.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\nmodule.exports = {game, EtymancerGame, WORD_SETS};';
     const mod = {exports:{}};
     new Function('module','document','localStorage','setTimeout', src)
@@ -77,7 +87,7 @@ section('1. Boot, lists, save isolation');
     store = {}; resetDom();
     const m = loadGame();
     m.game.showStart();
-    check('first launch shows picker', html().includes('CHOOSE YOUR SPELLBOOK'));
+    check('first launch shows picker', html().includes('Choose a Grimoire') || html().includes('CHOOSE YOUR SPELLBOOK'));
     m.game.chooseWordSet('roots');
     eq('roots list active', m.game.wordSet.id, 'roots');
     eq('starting INT includes gear', m.game.player.intelligence, 15);
@@ -255,6 +265,90 @@ section('7. Mastery progression and adaptive review');
     eq('New Game resets active mastery', m2.game.masteryStage(wordTerm), 'New');
     m2.game.chooseWordSet('roots');
     eq('other list mastery survives', m2.game.masteryStage(term), 'Learning');
+}
+
+section('8. Browser-session flow journeys');
+{
+    // Cold reload with persisted progress starts a new page session rather than
+    // pretending there is an in-memory encounter to continue.
+    store = {}; resetDom();
+    localStorage.setItem('etymancerWordSet', 'roots');
+    localStorage.setItem('etymancerSave:roots', JSON.stringify({
+        player: {...freshGame('roots').game.player, gold: 77},
+        questionsAnswered: 23,
+        questionPool: []
+    }));
+    resetDom();
+    const cold = loadGame().game;
+    check('cold load with saved progress says adventure ready', html().includes('Your adventure is ready to begin.'));
+    check('cold load offers Begin Casting', html().includes('Begin Casting'));
+    check('cold load does not offer Continue Casting', !html().includes('Continue Casting'));
+    eq('cold load preserves saved spell count', cold.questionsAnswered, 23);
+    eq('cold load preserves saved gold', cold.player.gold, 77);
+
+    // Spell 10 result must remain until the player explicitly continues.
+    const {game} = freshGame('roots');
+    game.questionsAnswered = 9;
+    game.askQuestion();
+    eq('debug-equivalent setup reaches spell 10', game.questionsAnswered, 10);
+    answer(game, correctAnswerFor(game));
+    check('spell 10 result remains visible', html().includes('Continue'));
+    check('spell 10 does not auto-offer boss', !html().includes('air crackles'));
+    eq('spell 10 flow state is casting result', game.flow.gameplayState, 'casting-result');
+    game.nextQuestion();
+    check('Continue opens boss offer', html().includes('air crackles'));
+    eq('boss offer remains spell 10', game.questionsAnswered, 10);
+    eq('boss offer flow state recorded', game.flow.gameplayState, 'boss-offer');
+
+    // Reported chain: boss offer -> Grimoire -> Main Menu -> Continue Casting.
+    game.showSpellbookSetup();
+    game.showMainMenu();
+    eq('boss-offer detour does not create spell 11', game.questionsAnswered, 10);
+    game.askQuestion(); // side-screen Continue Casting resolves to resume
+    check('boss-offer chained detour returns to boss offer', html().includes('air crackles'));
+    eq('boss-offer chained detour still spell 10', game.questionsAnswered, 10);
+
+    // Active duel retains HP/question/state through several side screens.
+    game.startDuel('Lexivore');
+    game.duel.bossHp -= 7;
+    const bossHp = game.duel.bossHp;
+    const playerHp = game.duel.playerHp;
+    const duelQuestion = game.currentQuestion;
+    game.showMainMenu();
+    game.showSpellbookSetup();
+    game.showShop();
+    game.showMainMenu();
+    game.askQuestion();
+    eq('duel detour preserves boss HP', game.duel.bossHp, bossHp);
+    eq('duel detour preserves player HP', game.duel.playerHp, playerHp);
+    eq('duel detour preserves question', game.currentQuestion, duelQuestion);
+    eq('duel detour returns to duel question', game.flow.gameplayState, 'duel-question');
+
+    // Typed drafts are session flow data, not DOM snapshots.
+    els['answer-input'].value = 'partial duel answer';
+    game.showSpellbookSetup();
+    game.showMainMenu();
+    game.askQuestion();
+    eq('duel draft survives detour', els['answer-input'].value, 'partial duel answer');
+
+    // Result screens survive side-screen navigation until explicit Continue.
+    const normal = freshGame('roots').game;
+    normal.askQuestion();
+    answer(normal, correctAnswerFor(normal));
+    const resultQuestion = normal.currentQuestion;
+    eq('normal result state recorded', normal.flow.gameplayState, 'casting-result');
+    normal.showSpellbookSetup();
+    normal.showMainMenu();
+    normal.askQuestion();
+    eq('result detour returns to result state', normal.flow.gameplayState, 'casting-result');
+    eq('result detour preserves question', normal.currentQuestion, resultQuestion);
+    check('result detour still shows Continue', html().includes('Continue'));
+
+    // Switching Grimoire intentionally abandons the old in-session encounter.
+    normal.showSpellbookSetup();
+    normal.selectSpellbookForSetup('words');
+    check('Grimoire switch clears old return target', !normal.flow.returnTo);
+    eq('Grimoire switch activates words', normal.wordSet.id, 'words');
 }
 
 console.log(`\n=== RESULT: ${pass} checks passed, ${failures.length} failed ===`);
