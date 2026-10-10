@@ -40,7 +40,16 @@ const EQUIPMENT = {
 // The guard keeps equipment.js safe for the Node-based playthrough harness.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        const extensions = ['mastery.js', 'mastery-spacing.js', 'ui.js', 'ui-navigation.js', 'inventory.js', 'debug.js', 'boss-flow.js'];
+        const extensions = [
+            'mastery.js',
+            'mastery-spacing.js',
+            'ui.js',
+            'boss-flow.js',
+            'flow-state.js',
+            'ui-navigation.js',
+            'inventory.js',
+            'debug.js'
+        ];
         // A fresh token on every page load prevents stale extension code from
         // surviving branch switches or deployments. This affects browser asset
         // caching only; game progress remains in the existing localStorage keys.
