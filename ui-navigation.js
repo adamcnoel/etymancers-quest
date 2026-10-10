@@ -193,4 +193,12 @@
         if (this.wordSet && this.wordSet.id !== setId) suspendedEncounter = null;
         return originalSelectSpellbookForSetup.call(this, setId);
     };
+
+    // ui.js renders the first menu before this navigation layer is installed.
+    // Re-render that menu once so startup goes through the final navigation
+    // rules (including the fresh-game "ready to begin" state).
+    const initialContainer = shell();
+    if (initialContainer && initialContainer.dataset.screen === 'menu') {
+        game.showMainMenu();
+    }
 })();
