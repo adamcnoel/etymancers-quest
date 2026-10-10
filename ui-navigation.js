@@ -1,7 +1,6 @@
-// Navigation-state fixes layered on top of the modular UI shell.
-// Leaving an unanswered cast or an in-progress duel for Menu / Grimoire /
-// Emporium / Character Sheet should suspend that exact encounter, not consume
-// a new question or abandon the boss fight.
+// Navigation policy layered on top of explicit flow-state.js.
+// Side screens are free to render normally; flow-state.js remembers the logical
+// gameplay state and makes existing "Back/Continue Casting" actions resume it.
 (function () {
     if (typeof EtymancerGame === 'undefined' || typeof game === 'undefined') return;
 
@@ -10,16 +9,7 @@
     proto.__uiNavigationInstalled = true;
 
     const originalShowMainMenu = proto.showMainMenu;
-    const originalShowSpellbookSetup = proto.showSpellbookSetup;
-    const originalShowCharacterSheet = proto.showCharacterSheet;
-    const originalShowShop = proto.showShop;
-    const originalShowPurchaseResult = proto.showPurchaseResult;
-    const originalShowPurchaseFailure = proto.showPurchaseFailure;
-    const originalShowHelp = proto.showHelp;
-    const originalShowResetConfirm = proto.showResetConfirm;
     const originalSelectSpellbookForSetup = proto.selectSpellbookForSetup;
-
-    let suspendedEncounter = null;
 
     function area() {
         return document.getElementById('game-area');
@@ -33,49 +23,7 @@
         return game.escapeHtml ? game.escapeHtml(text) : String(text);
     }
 
-    function captureActiveEncounter() {
-        if (suspendedEncounter) return;
-        const container = shell();
-        const gameArea = area();
-        const input = document.getElementById('answer-input');
-
-        if (!gameArea) return;
-
-        // An active duel is authoritative gameplay state. Do not depend on the
-        // screen marker being perfectly synchronized before preserving it.
-        const activeDuel = !!game.duel;
-        const activeCast = !!(
-            container &&
-            container.dataset.screen === 'gameplay' &&
-            input &&
-            !game.duel
-        );
-
-        // Result screens and the boss-offer screen have no active duel and no
-        // unresolved normal-cast input, so they intentionally do not suspend.
-        if (!activeDuel && !activeCast) return;
-
-        suspendedEncounter = {
-            kind: activeDuel ? 'duel' : 'cast',
-            html: gameArea.innerHTML,
-            inputValue: input ? (input.value || '') : '',
-            currentQuestion: game.currentQuestion,
-            currentAnswer: game.currentAnswer,
-            questionsAnswered: game.questionsAnswered,
-            duel: activeDuel ? {...game.duel} : null
-        };
-    }
-
-    function wireResumeButtons() {
-        const gameArea = area();
-        if (!gameArea) return;
-        gameArea.innerHTML = gameArea.innerHTML.replace(
-            /onclick="game\.askQuestion\(\)"/g,
-            'onclick="game.resumeCasting()"'
-        );
-    }
-
-    function renderFreshMainMenu() {
+    function renderSessionStartMenu() {
         const gameArea = area();
         if (!gameArea || !game.wordSet || !game.player) return;
         gameArea.innerHTML = `
@@ -94,30 +42,8 @@
             </section>`;
     }
 
-    proto.resumeCasting = function () {
-        if (!suspendedEncounter) return this.askQuestion();
-
-        const snapshot = suspendedEncounter;
-        suspendedEncounter = null;
-        this.currentQuestion = snapshot.currentQuestion;
-        this.currentAnswer = snapshot.currentAnswer;
-        this.questionsAnswered = snapshot.questionsAnswered;
-        this.duel = snapshot.duel ? {...snapshot.duel} : null;
-
-        const gameArea = area();
-        if (!gameArea) return;
-        gameArea.innerHTML = snapshot.html;
-        this.setScreen('gameplay');
-
-        const input = document.getElementById('answer-input');
-        if (input) {
-            input.value = snapshot.inputValue;
-            input.focus();
-        }
-    };
-
     proto.startNewGameFromUi = function () {
-        suspendedEncounter = null;
+        if (typeof this.discardGameplayReturn === 'function') this.discardGameplayReturn();
         this.newGame();
         this.currentQuestion = null;
         this.currentAnswer = null;
@@ -126,71 +52,50 @@
     };
 
     proto.showMainMenu = function () {
-        captureActiveEncounter();
         const result = originalShowMainMenu.call(this);
+        const flow = typeof this.ensureFlowState === 'function' ? this.ensureFlowState() : null;
+        const returningToGameplay = !!flow?.returnTo;
 
-        if (suspendedEncounter) {
-            wireResumeButtons();
-        } else if (this.wordSet && this.player && this.questionsAnswered === 0 && !this.currentQuestion) {
-            renderFreshMainMenu();
+        // Persisted progress is not the same thing as an active page-session
+        // encounter. On a cold load there is no question/result/duel to resume,
+        // even if the save says 37 spells have been answered. Only an explicit
+        // in-session return target should produce Continue Casting.
+        if (!returningToGameplay && this.wordSet && this.player) {
+            renderSessionStartMenu();
         }
-        return result;
-    };
-
-    proto.showSpellbookSetup = function () {
-        captureActiveEncounter();
-        const result = originalShowSpellbookSetup.call(this);
-        if (suspendedEncounter) wireResumeButtons();
-        return result;
-    };
-
-    proto.showCharacterSheet = function () {
-        captureActiveEncounter();
-        const result = originalShowCharacterSheet.call(this);
-        if (suspendedEncounter) wireResumeButtons();
-        return result;
-    };
-
-    proto.showShop = function () {
-        captureActiveEncounter();
-        const result = originalShowShop.call(this);
-        if (suspendedEncounter) wireResumeButtons();
-        return result;
-    };
-
-    proto.showPurchaseResult = function (message) {
-        const result = originalShowPurchaseResult.call(this, message);
-        if (suspendedEncounter) wireResumeButtons();
-        return result;
-    };
-
-    proto.showPurchaseFailure = function (cost) {
-        const result = originalShowPurchaseFailure.call(this, cost);
-        if (suspendedEncounter) wireResumeButtons();
-        return result;
-    };
-
-    proto.showHelp = function () {
-        captureActiveEncounter();
-        const result = originalShowHelp.call(this);
-        if (suspendedEncounter) wireResumeButtons();
         return result;
     };
 
     proto.showResetConfirm = function () {
-        const result = originalShowResetConfirm.call(this);
+        this.setScreen('menu');
+        if (!this.wordSet) return this.showSpellbookSetup();
         const gameArea = area();
-        if (gameArea) {
-            gameArea.innerHTML = gameArea.innerHTML.replace(
-                'onclick="newGame(); game.showMainMenu()"',
-                'onclick="game.startNewGameFromUi()"'
-            );
-        }
-        return result;
+        if (!gameArea) return;
+        gameArea.innerHTML = `
+            <section class="screen-section">
+                <div class="screen-kicker">NEW GAME</div>
+                <div class="screen-title">Reset ${safe(this.wordSet.name)}?</div>
+                <p>This resets level, gold, gear, mana, streak and mastery for this Grimoire only.</p>
+                <div class="view-actions">
+                    <button class="danger-action" onclick="game.startNewGameFromUi()">Reset Progress</button>
+                    <button onclick="game.showMainMenu()">Cancel</button>
+                </div>
+            </section>`;
     };
 
     proto.selectSpellbookForSetup = function (setId) {
-        if (this.wordSet && this.wordSet.id !== setId) suspendedEncounter = null;
+        if (this.wordSet && this.wordSet.id !== setId &&
+            typeof this.discardGameplayReturn === 'function') {
+            this.discardGameplayReturn();
+        }
         return originalSelectSpellbookForSetup.call(this, setId);
     };
+
+    // ui.js renders the first menu before this final navigation policy is loaded.
+    // Re-render once so every cold page load uses the session-start menu. Saved
+    // study/RPG progress is preserved; only an in-page encounter is resumable.
+    const initialContainer = shell();
+    if (initialContainer && initialContainer.dataset.screen === 'menu') {
+        game.showMainMenu();
+    }
 })();

@@ -35,7 +35,16 @@ function check(label, condition) {
 check('extension loader registers for DOMContentLoaded', typeof domReady === 'function');
 domReady();
 
-const expected = ['mastery.js', 'mastery-spacing.js', 'ui.js', 'ui-navigation.js', 'inventory.js', 'debug.js'];
+const expected = [
+    'mastery.js',
+    'mastery-spacing.js',
+    'ui.js',
+    'boss-flow.js',
+    'flow-state.js',
+    'ui-navigation.js',
+    'inventory.js',
+    'debug.js'
+];
 for (let i = 0; i < expected.length; i++) {
     const script = appended[i];
     check(`${expected[i]} is loaded`, !!script && script.src.startsWith(`${expected[i]}?v=`));

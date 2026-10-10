@@ -37,20 +37,27 @@ const EQUIPMENT = {
 // Browser-only extensions depend on the EtymancerGame class and global game
 // instance defined later in index.html. Load them sequentially after the inline
 // game script so each layer can safely build on the previous one.
-//
-// These extensions are deliberately cache-busted on every page load. The app is
-// a small static study guide, so reliably getting the current UI/feature code is
-// more valuable than reusing a stale script from browser cache. This affects
-// asset requests only; saved progress remains in localStorage unchanged.
 // The guard keeps equipment.js safe for the Node-based playthrough harness.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        const extensions = ['mastery.js', 'mastery-spacing.js', 'ui.js', 'ui-navigation.js', 'inventory.js', 'debug.js'];
-        const assetVersion = Date.now();
+        const extensions = [
+            'mastery.js',
+            'mastery-spacing.js',
+            'ui.js',
+            'boss-flow.js',
+            'flow-state.js',
+            'ui-navigation.js',
+            'inventory.js',
+            'debug.js'
+        ];
+        // A fresh token on every page load prevents stale extension code from
+        // surviving branch switches or deployments. This affects browser asset
+        // caching only; game progress remains in the existing localStorage keys.
+        const cacheToken = Date.now();
         const loadNext = index => {
             if (index >= extensions.length) return;
             const script = document.createElement('script');
-            script.src = `${extensions[index]}?v=${assetVersion}`;
+            script.src = `${extensions[index]}?v=${cacheToken}`;
             script.onload = () => loadNext(index + 1);
             document.body.appendChild(script);
         };
