@@ -40,7 +40,7 @@ const EQUIPMENT = {
 // The guard keeps equipment.js safe for the Node-based playthrough harness.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        const extensions = ['mastery.js', 'mastery-spacing.js', 'ui.js', 'ui-navigation.js'];
+        const extensions = ['mastery.js', 'mastery-spacing.js', 'ui.js', 'ui-navigation.js', 'inventory.js'];
         const loadNext = index => {
             if (index >= extensions.length) return;
             const script = document.createElement('script');

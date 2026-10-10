@@ -23,6 +23,7 @@ jobs:
           node --check mastery-spacing.js
           node --check ui.js
           node --check ui-navigation.js
+          node --check inventory.js
 
       - name: Run playthrough tests
         run: node tests/playthrough.js
@@ -38,3 +39,6 @@ jobs:
 
       - name: Run UI navigation regression
         run: node tests/ui-navigation.js
+
+      - name: Run Inventory UI regression
+        run: node tests/inventory-ui.js
