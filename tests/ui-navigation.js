@@ -1,4 +1,4 @@
-// Regression tests for suspending/resuming an unanswered cast across UI detours.
+// Regression tests for suspending/resuming unresolved casts and boss duels across UI detours.
 const fs = require('fs');
 const path = require('path');
 
@@ -63,6 +63,7 @@ function check(label, condition) {
     else { failed++; console.error(`FAIL: ${label}`); }
 }
 
+// Normal unanswered cast survives a detour.
 const originalHtml = gameArea.innerHTML;
 const originalQuestion = game.currentQuestion;
 const originalAnswer = game.currentAnswer;
@@ -80,7 +81,39 @@ check('resume preserves spell counter', game.questionsAnswered === originalCount
 check('resume preserves typed answer', input.value === 'typed answer');
 check('resume returns to gameplay screen', container.dataset.screen === 'gameplay');
 
-// New Game should clear any suspended cast and land on a fresh-game main menu.
+// An in-progress boss duel must survive the same detour instead of falling
+// through to askQuestion() and advancing to the next normal spell.
+container.dataset.screen = 'gameplay';
+answerVisible = true;
+input.value = 'duel answer';
+game.questionsAnswered = 10;
+game.currentQuestion = "What root means 'old'?";
+game.currentAnswer = {type: 'term', term: 'paleo', definition: 'old'};
+game.duel = {
+    bossName: 'Lexivore', bossMaxHp: 95, bossHp: 61,
+    bossHit: 18, playerMaxHp: 90, playerHp: 72,
+    duelStreak: 2, channelArmed: true
+};
+gameArea.innerHTML = '<div>=== SPELL DUEL: Lexivore ===</div><input id="answer-input">';
+const duelHtml = gameArea.innerHTML;
+const duelState = {...game.duel};
+const duelQuestion = game.currentQuestion;
+
+game.showMainMenu();
+check('duel detour does not advance to spell 11', game.questionsAnswered === 10);
+check('duel detour return button resumes encounter', gameArea.innerHTML.includes('game.resumeCasting()'));
+
+game.resumeCasting();
+check('duel resume restores exact duel markup', gameArea.innerHTML === duelHtml);
+check('duel resume restores duel question', game.currentQuestion === duelQuestion);
+check('duel resume restores boss HP', game.duel?.bossHp === duelState.bossHp);
+check('duel resume restores player HP', game.duel?.playerHp === duelState.playerHp);
+check('duel resume restores duel streak', game.duel?.duelStreak === duelState.duelStreak);
+check('duel resume restores channel armed state', game.duel?.channelArmed === true);
+check('duel resume preserves typed duel answer', input.value === 'duel answer');
+check('duel resume keeps spell counter at 10', game.questionsAnswered === 10);
+
+// New Game should clear any suspended encounter and land on a fresh-game main menu.
 container.dataset.screen = 'menu';
 answerVisible = false;
 game.showResetConfirm();
