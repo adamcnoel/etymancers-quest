@@ -62,8 +62,6 @@ check('cold startup offers Begin Casting', gameArea.innerHTML.includes('Begin Ca
 check('cold startup hides Welcome back', !gameArea.innerHTML.includes('Welcome back'));
 check('cold startup hides Continue Casting', !gameArea.innerHTML.includes('Continue Casting'));
 
-// A gameplay return target means this is not a fresh start even if the current
-// question is temporarily null while the player is browsing a side screen.
 game.flow.returnTo = {screen: 'gameplay', gameplayState: 'boss-offer'};
 game.questionsAnswered = 10;
 game.showMainMenu();
@@ -81,8 +79,10 @@ check('new game returns to menu', container.dataset.screen === 'menu');
 check('new game shows fresh menu', gameArea.innerHTML.includes('Your adventure is ready to begin.'));
 
 const navSource = fs.readFileSync(path.join(__dirname, '..', 'ui-navigation.js'), 'utf8');
+const flowSource = fs.readFileSync(path.join(__dirname, '..', 'flow-state.js'), 'utf8');
 check('navigation policy no longer snapshots innerHTML', !navSource.includes('snapshot.html') && !navSource.includes('suspendedEncounter'));
 check('navigation policy no longer rewrites casting buttons', !navSource.includes('wireResumeButtons'));
+check('flow layer uses explicit gameplay states', flowSource.includes("'boss-offer'") && flowSource.includes("'duel-result'") && flowSource.includes('renderCurrentGameplay'));
 
 console.log(`\nRESULT: ${checks - failed} checks passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
