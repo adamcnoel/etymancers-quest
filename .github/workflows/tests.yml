@@ -37,6 +37,9 @@ jobs:
       - name: Run playthrough tests
         run: node tests/playthrough.js
 
+      - name: Run campaign playthrough
+        run: node tests/campaign-playthrough.js
+
       - name: Run mastery spacing regression
         run: node tests/mastery-spacing.js
 
