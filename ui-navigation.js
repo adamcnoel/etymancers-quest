@@ -23,7 +23,7 @@
         return game.escapeHtml ? game.escapeHtml(text) : String(text);
     }
 
-    function renderFreshMainMenu() {
+    function renderSessionStartMenu() {
         const gameArea = area();
         if (!gameArea || !game.wordSet || !game.player) return;
         gameArea.innerHTML = `
@@ -56,9 +56,12 @@
         const flow = typeof this.ensureFlowState === 'function' ? this.ensureFlowState() : null;
         const returningToGameplay = !!flow?.returnTo;
 
-        if (!returningToGameplay && this.wordSet && this.player &&
-            this.questionsAnswered === 0 && !this.currentQuestion) {
-            renderFreshMainMenu();
+        // Persisted progress is not the same thing as an active page-session
+        // encounter. On a cold load there is no question/result/duel to resume,
+        // even if the save says 37 spells have been answered. Only an explicit
+        // in-session return target should produce Continue Casting.
+        if (!returningToGameplay && this.wordSet && this.player) {
+            renderSessionStartMenu();
         }
         return result;
     };
@@ -89,7 +92,8 @@
     };
 
     // ui.js renders the first menu before this final navigation policy is loaded.
-    // Re-render once so a fresh save uses the intentional fresh-game menu.
+    // Re-render once so every cold page load uses the session-start menu. Saved
+    // study/RPG progress is preserved; only an in-page encounter is resumable.
     const initialContainer = shell();
     if (initialContainer && initialContainer.dataset.screen === 'menu') {
         game.showMainMenu();
