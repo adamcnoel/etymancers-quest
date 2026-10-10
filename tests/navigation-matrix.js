@@ -120,7 +120,7 @@ const states = [
     {
         name: 'casting question', kind: 'casting-question', count: 7,
         question: 'What does arc mean?', answer: {type: 'definition', term: 'arc'},
-        payload: null, duel: null, marker: 'Spell 7'
+        payload: {draft: ''}, duel: null, marker: 'Spell 7', draft: 'partially typed spell'
     },
     {
         name: 'casting result', kind: 'casting-result', count: 8,
@@ -136,7 +136,7 @@ const states = [
     {
         name: 'duel question', kind: 'duel-question', count: 10,
         question: "What root means 'old'?", answer: {type: 'term', term: 'paleo', definition: 'old'},
-        payload: null, duel: duel(), marker: 'SPELL DUEL: Lexivore'
+        payload: {draft: ''}, duel: duel(), marker: 'SPELL DUEL: Lexivore', draft: 'partial duel answer'
     },
     {
         name: 'duel result', kind: 'duel-result', count: 10,
@@ -177,6 +177,8 @@ function loadState(state) {
     game.flow.returnTo = null;
     game.recordGameplayState(state.kind, state.payload ? {...state.payload} : null);
     container.dataset.screen = 'gameplay';
+    game.renderCurrentGameplay();
+    if (state.draft && answerVisible) input.value = state.draft;
 }
 
 for (const state of states) {
@@ -199,6 +201,9 @@ for (const state of states) {
         check(`${state.name} -> ${detourName}: redraws expected state`, gameArea.innerHTML.includes(state.marker));
         if (state.duel) {
             check(`${state.name} -> ${detourName}: preserves duel HP`, game.duel?.bossHp === expectedBossHp && game.duel?.playerHp === expectedPlayerHp);
+        }
+        if (state.draft) {
+            check(`${state.name} -> ${detourName}: preserves typed draft`, input.value === state.draft);
         }
     }
 }
