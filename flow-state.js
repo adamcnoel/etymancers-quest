@@ -39,6 +39,13 @@
         return input ? input.value : '';
     }
 
+    function restoreDraft(payload) {
+        const input = document.getElementById('answer-input');
+        if (!input) return;
+        input.value = payload?.draft || '';
+        input.focus();
+    }
+
     function masterySnapshot(instance, answer, correctOverride) {
         if (!instance.currentAnswer || typeof instance.masteryStage !== 'function') return null;
         let term = instance.currentAnswer.term;
@@ -102,6 +109,9 @@
     proto.setScreen = function (name) {
         const flow = this.ensureFlowState();
         if (name !== 'gameplay' && flow.screen === 'gameplay' && flow.gameplayState) {
+            if (flow.gameplayState === 'casting-question' || flow.gameplayState === 'duel-question') {
+                flow.payload = {...(flow.payload || {}), draft: currentInputValue()};
+            }
             flow.returnTo = {screen: 'gameplay', gameplayState: flow.gameplayState};
         }
         flow.screen = name;
@@ -111,6 +121,7 @@
     proto.renderCastingQuestionState = function () {
         const gameArea = area();
         if (!gameArea) return;
+        const flow = this.ensureFlowState();
         const comboBanner = this.player.streak >= 2
             ? `<div class="combo">🔥 Combo x${this.getComboMultiplier()} (streak ${this.player.streak}) — earning ${this.getComboMultiplier()}× gold &amp; mana!</div>`
             : '';
@@ -125,6 +136,7 @@
             </div>
         `;
         this.setScreen('gameplay');
+        restoreDraft(flow.payload);
     };
 
     proto.renderCastingResultState = function (payload = {}) {
@@ -165,6 +177,7 @@
         const gameArea = area();
         const d = this.duel;
         if (!gameArea || !d) return;
+        const flow = this.ensureFlowState();
         const canChannel = this.player.mana >= 10;
         const base = this.baseSpellDamage();
         const streakBonus = (d.duelStreak + 1) * 2;
@@ -196,6 +209,7 @@
             </div>
         `;
         this.setScreen('gameplay');
+        restoreDraft(flow.payload);
     };
 
     proto.renderDuelResultState = function (payload = {}) {
@@ -307,7 +321,7 @@
             return this.resumeCasting();
         }
         const result = originalAskQuestion.call(this);
-        this.recordGameplayState('casting-question');
+        this.recordGameplayState('casting-question', {draft: ''});
         return result;
     };
 
@@ -326,7 +340,7 @@
 
     proto.duelTurn = function () {
         const result = originalDuelTurn.call(this);
-        this.recordGameplayState('duel-question');
+        this.recordGameplayState('duel-question', {draft: ''});
         return result;
     };
 
