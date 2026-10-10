@@ -40,6 +40,7 @@ function loadGame() {
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline
         + '\n' + fs.readFileSync(path.join(ROOT, 'mastery.js'), 'utf8')
+        + '\n' + fs.readFileSync(path.join(ROOT, 'mastery-spacing.js'), 'utf8')
         + '\nmodule.exports = {game, EtymancerGame, WORD_SETS};';
     const mod = {exports:{}};
     new Function('module','document','localStorage','setTimeout', src)
@@ -222,10 +223,25 @@ section('7. Mastery progression and adaptive review');
     eq('Learning recent-miss weight', m2.game.masteryWeight(term), 6);
 
     for (let i = 0; i < 6; i++) m2.game.recordMastery(strong, true);
+
+    // Compare weights only after both terms are outside the spacing window.
+    m2.game.masterySequence += 3;
     m2.game.refillQuestionPool();
     const weakCount = m2.game.questionPool.filter(q => q.term === term).length;
     const strongCount = m2.game.questionPool.filter(q => q.term === strong).length;
     check('adaptive pool repeats weak terms more often', weakCount > strongCount, `${weakCount} vs ${strongCount}`);
+
+    // Integration check: the full mastery + spacing stack suppresses both
+    // directions of a just-answered term until three other answers intervene.
+    const recentTerm = rootTerms[2];
+    m2.game.recordMastery(recentTerm, true);
+    m2.game.refillQuestionPool();
+    eq('recent term excluded from full question pool',
+        m2.game.questionPool.filter(q => q.term === recentTerm).length, 0);
+    m2.game.masterySequence += 3;
+    m2.game.refillQuestionPool();
+    check('recent term returns after spacing window',
+        m2.game.questionPool.some(q => q.term === recentTerm));
 
     const summary = m2.game.masterySummary();
     eq('mastery buckets add to total', summary.New + summary.Learning + summary.Familiar + summary.Mastered, summary.total);
