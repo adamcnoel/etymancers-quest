@@ -14,6 +14,7 @@
     proto.debugStartDuel = function () {
         if (!this.wordSet || !this.player) return this.showSpellbookSetup();
         this.startDuel('Debugging Wyrm');
+        if (typeof this.setScreen === 'function') this.setScreen('gameplay');
     };
 
     proto.debugPrimeBossThreshold = function () {
