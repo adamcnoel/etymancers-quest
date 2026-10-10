@@ -39,18 +39,30 @@
         const gameArea = area();
         const input = document.getElementById('answer-input');
 
-        // Only suspend an unresolved gameplay prompt. Result screens and the
-        // boss-offer screen have no answer input and continue normally.
-        if (!container || container.dataset.screen !== 'gameplay' || !gameArea || !input) return;
+        if (!gameArea) return;
+
+        // An active duel is authoritative gameplay state. Do not depend on the
+        // screen marker being perfectly synchronized before preserving it.
+        const activeDuel = !!game.duel;
+        const activeCast = !!(
+            container &&
+            container.dataset.screen === 'gameplay' &&
+            input &&
+            !game.duel
+        );
+
+        // Result screens and the boss-offer screen have no active duel and no
+        // unresolved normal-cast input, so they intentionally do not suspend.
+        if (!activeDuel && !activeCast) return;
 
         suspendedEncounter = {
-            kind: game.duel ? 'duel' : 'cast',
+            kind: activeDuel ? 'duel' : 'cast',
             html: gameArea.innerHTML,
-            inputValue: input.value || '',
+            inputValue: input ? (input.value || '') : '',
             currentQuestion: game.currentQuestion,
             currentAnswer: game.currentAnswer,
             questionsAnswered: game.questionsAnswered,
-            duel: game.duel ? {...game.duel} : null
+            duel: activeDuel ? {...game.duel} : null
         };
     }
 
