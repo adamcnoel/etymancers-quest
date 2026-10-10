@@ -29,6 +29,8 @@ jobs:
           node --check flow-state.js
           node --check duel-copy.js
           node --check ui-navigation.js
+          node --check bosses.js
+          node --check boss-campaign.js
           node --check inventory.js
           node --check debug.js
 
@@ -46,6 +48,9 @@ jobs:
 
       - name: Run duel copy regression
         run: node tests/duel-copy.js
+
+      - name: Run boss campaign regression
+        run: node tests/boss-campaign.js
 
       - name: Run UI architecture regression
         run: node tests/ui-layout.js
