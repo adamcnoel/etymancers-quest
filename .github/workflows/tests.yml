@@ -42,6 +42,9 @@ jobs:
       - name: Run UI navigation regression
         run: node tests/ui-navigation.js
 
+      - name: Run navigation state matrix
+        run: node tests/navigation-matrix.js
+
       - name: Run Inventory UI regression
         run: node tests/inventory-ui.js
 
