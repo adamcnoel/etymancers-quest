@@ -27,6 +27,7 @@ jobs:
           node --check boss-flow.js
           node --check cast-copy.js
           node --check flow-state.js
+          node --check duel-copy.js
           node --check ui-navigation.js
           node --check inventory.js
           node --check debug.js
@@ -42,6 +43,9 @@ jobs:
 
       - name: Run cast copy regression
         run: node tests/cast-copy.js
+
+      - name: Run duel copy regression
+        run: node tests/duel-copy.js
 
       - name: Run UI architecture regression
         run: node tests/ui-layout.js
