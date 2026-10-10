@@ -69,7 +69,6 @@
 
     proto.showInventory = function () {
         if (!this.wordSet || !this.player) return this.showSpellbookSetup();
-        if (typeof this.suspendGameplayState === 'function') this.suspendGameplayState();
         this.setScreen('inventory');
 
         const owned = (this.player.ownedItems || []).filter(itemName => this.shopItems[itemName]);
