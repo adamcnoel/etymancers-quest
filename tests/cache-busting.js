@@ -40,6 +40,7 @@ const expected = [
     'mastery-spacing.js',
     'ui.js',
     'grimoire-status.js',
+    'grimoire-sort.js',
     'boss-flow.js',
     'flow-state.js',
     'ui-navigation.js',
