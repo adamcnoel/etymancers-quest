@@ -85,7 +85,7 @@ const bossIds = ['gorgon-garbled-roots', 'lexivore', 'babbling-wyrm', 'warden-lo
 
 game.showBossCampaign();
 check('campaign screen shows 0/6 progress', /0\/6 bosses defeated/.test(html));
-check('campaign screen renders all six bosses', bossIds.every(id => campaignSource.includes(id)) && (html.match(/class="boss-card /g) || []).length === 6);
+check('campaign screen renders all six bosses', bossIds.every(id => bossSource.includes(id)) && (html.match(/class="boss-card /g) || []).length === 6);
 check('campaign screen uses player-selected Challenge actions', (html.match(/>Challenge<\/button>/g) || []).length === 6);
 check('desktop campaign layout is three columns', /grid-template-columns:\s*repeat\(3/.test(campaignSource));
 check('phone campaign layout is two columns', /max-width:\s*600px[\s\S]*repeat\(2/.test(campaignSource));
