@@ -208,7 +208,6 @@ for (const state of states) {
     }
 }
 
-// Exact reported path: boss offer -> Grimoire -> Main Menu -> Continue Casting.
 const bossOffer = states.find(state => state.kind === 'boss-offer');
 loadState(bossOffer);
 game.showSpellbookSetup();
@@ -219,7 +218,6 @@ game.askQuestion();
 check('boss-offer chained detour resumes offer', game.flow.gameplayState === 'boss-offer' && gameArea.innerHTML.includes('air crackles'));
 check('boss-offer chained detour never creates spell 11', game.questionsAnswered === 10 && game.askCalls === 0);
 
-// Deliberately changing Grimoire abandons the old gameplay return target.
 loadState(states[0]);
 game.showSpellbookSetup();
 game.selectSpellbookForSetup('words');
@@ -227,6 +225,8 @@ check('changing Grimoire discards old gameplay return', game.flow.returnTo === n
 const beforeNewBookCast = game.questionsAnswered;
 game.askQuestion();
 check('casting after Grimoire change starts a new question', game.askCalls === 1 && game.questionsAnswered === beforeNewBookCast + 1);
+
+check('flow state contains no rendered-HTML snapshot field', !flowSource.includes('snapshot.html') && !flowSource.includes('html: gameArea.innerHTML'));
 
 console.log(`\nRESULT: ${checks - failed} checks passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
