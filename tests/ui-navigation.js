@@ -1,18 +1,18 @@
-// Regression tests for suspending/resuming unresolved casts and boss duels across UI detours.
+// Regression tests for startup navigation plus suspending/resuming unresolved casts and boss duels.
 const fs = require('fs');
 const path = require('path');
 
-let answerVisible = true;
+let answerVisible = false;
 const input = {value: 'typed answer', focus() { this.focused = true; }, focused: false};
 const gameArea = {
-    _html: '<div>Original spell</div><input id="answer-input">',
+    _html: '<div>Welcome back, Etymancer.</div>',
     get innerHTML() { return this._html; },
     set innerHTML(value) {
         this._html = value;
         answerVisible = value.includes('id="answer-input"');
     }
 };
-const container = {dataset: {screen: 'gameplay'}};
+const container = {dataset: {screen: 'menu'}};
 
 global.document = {
     getElementById(id) {
@@ -30,9 +30,9 @@ class EtymancerGame {
     constructor() {
         this.wordSet = {id: 'roots', name: 'Roots & Affixes'};
         this.player = {level: 1};
-        this.currentQuestion = 'What does arc mean?';
-        this.currentAnswer = {type: 'definition', term: 'arc'};
-        this.questionsAnswered = 7;
+        this.currentQuestion = null;
+        this.currentAnswer = null;
+        this.questionsAnswered = 0;
         this.duel = null;
         this.newGameCalls = 0;
     }
@@ -40,7 +40,7 @@ class EtymancerGame {
     setScreen(name) { container.dataset.screen = name; }
     askQuestion() { this.questionsAnswered++; this.currentQuestion = 'NEW QUESTION'; }
     newGame() { this.newGameCalls++; this.questionsAnswered = 0; }
-    showMainMenu() { this.setScreen('menu'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Continue Casting</button><button>Etymancer</button><button>Arcane Emporium</button>'; }
+    showMainMenu() { this.setScreen('menu'); gameArea.innerHTML = '<div>Welcome back, Etymancer.</div><button onclick="game.askQuestion()">Continue Casting</button><button>Etymancer</button><button>Arcane Emporium</button>'; }
     showSpellbookSetup() { this.setScreen('spellbook'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Continue Casting</button>'; }
     showCharacterSheet() { this.setScreen('character'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Back to Casting</button>'; }
     showShop() { this.setScreen('shop'); gameArea.innerHTML = '<button onclick="game.askQuestion()">Back to Casting</button>'; }
@@ -63,7 +63,22 @@ function check(label, condition) {
     else { failed++; console.error(`FAIL: ${label}`); }
 }
 
+// ui.js renders its generic returning-player menu before ui-navigation.js loads.
+// Installing this layer must immediately replace that with the fresh-game menu.
+check('cold startup re-renders the menu through final navigation rules', gameArea.innerHTML.includes('Your adventure is ready to begin.'));
+check('cold startup offers Begin Casting', gameArea.innerHTML.includes('Begin Casting'));
+check('cold startup does not show Welcome back', !gameArea.innerHTML.includes('Welcome back'));
+check('cold startup does not show Continue Casting', !gameArea.innerHTML.includes('Continue Casting'));
+
 // Normal unanswered cast survives a detour.
+container.dataset.screen = 'gameplay';
+answerVisible = true;
+input.value = 'typed answer';
+game.questionsAnswered = 7;
+game.currentQuestion = 'What does arc mean?';
+game.currentAnswer = {type: 'definition', term: 'arc'};
+game.duel = null;
+gameArea.innerHTML = '<div>Original spell</div><input id="answer-input">';
 const originalHtml = gameArea.innerHTML;
 const originalQuestion = game.currentQuestion;
 const originalAnswer = game.currentAnswer;
