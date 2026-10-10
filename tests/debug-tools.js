@@ -39,7 +39,7 @@ function run(search) {
         }
         showSpellbookSetup() {}
         startDuel(name) { this.startedBoss = name; }
-        askQuestion() { this.askCalls++; }
+        askQuestion() { this.askCalls++; this.questionsAnswered++; }
         updateStats() {}
         saveGame() {}
     }
@@ -62,7 +62,7 @@ debug.game.debugStartDuel();
 check('start duel shortcut uses normal duel flow', debug.game.startedBoss === 'Debugging Wyrm');
 
 debug.game.debugPrimeBossThreshold();
-check('boss threshold shortcut primes spell count to 10', debug.game.questionsAnswered === 9);
+check('boss threshold shortcut advances into spell 10', debug.game.questionsAnswered === 10);
 check('boss threshold shortcut starts one normal spell', debug.game.askCalls === 1);
 
 debug.game.debugFillMana();
