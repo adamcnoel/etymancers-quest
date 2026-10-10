@@ -45,6 +45,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             'mastery-spacing.js',
             'ui.js',
             'grimoire-status.js',
+            'grimoire-sort.js',
             'boss-flow.js',
             'flow-state.js',
             'ui-navigation.js',
