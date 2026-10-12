@@ -84,6 +84,7 @@ function loadGame() {
         'ui-navigation.js',
         'bosses.js',
         'boss-campaign.js',
+        'level-hold.js',
         'inventory.js'
     ];
     const src = ['roots.js','words.js','equipment.js']
@@ -121,6 +122,10 @@ resetDom();
 const {game} = loadGame();
 game.chooseWordSet('roots');
 game.newGame();
+
+check('deferred Etymancer Level is hidden from HUD', !/Lv\s+\d+/.test(document.getElementById('compact-hud')?.innerHTML || ''));
+game.showCharacterSheet();
+check('deferred Etymancer Level is hidden from character sheet', !/Level\s+\d+/.test(html()));
 
 // Crossing a former modulo-10 boundary should now stay in casting.
 game.questionsAnswered = 9;
