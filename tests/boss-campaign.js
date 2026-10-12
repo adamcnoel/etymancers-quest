@@ -7,6 +7,7 @@ const campaignSource = fs.readFileSync(path.join(__dirname, '..', 'boss-campaign
 let html = '';
 const gameArea = { get innerHTML() { return html; }, set innerHTML(value) { html = value; } };
 const headChildren = [];
+const container = {dataset: {screen: 'menu'}};
 const document = {
     head: {appendChild(node) { headChildren.push(node); }},
     getElementById(id) {
@@ -14,7 +15,7 @@ const document = {
         if (id === 'boss-campaign-styles') return headChildren.find(node => node.id === id) || null;
         return null;
     },
-    querySelector() { return null; },
+    querySelector(selector) { return selector === '.game-container' ? container : null; },
     createElement(tag) {
         return {tagName: tag, id: '', type: '', textContent: '', dataset: {}, onclick: null, appendChild() {}, querySelector() { return null; }};
     }
@@ -44,11 +45,15 @@ class EtymancerGame {
     showMainMenu() {}
     showSpellbookSetup() {}
     showHelp() {}
-    setScreen(name) { this.flow.screen = name; }
+    updateStats() {}
+    saveGame() {}
+    setScreen(name) { this.flow.screen = name; container.dataset.screen = name; }
     ensureFlowState() { return this.flow; }
     discardGameplayReturn() { this.flow.returnTo = null; this.flow.gameplayState = null; this.flow.payload = null; }
-    askQuestion() { this.askCalls++; }
-    duelTurn() { this.duelTurnCalls++; }
+    askQuestion() { this.askCalls++; this.flow.screen = 'gameplay'; }
+    resumeCasting() { this.flow.returnTo = null; this.flow.screen = 'gameplay'; }
+    duelTurn() { this.duelTurnCalls++; this.flow.screen = 'gameplay'; this.flow.gameplayState = 'duel-question'; }
+    renderCurrentGameplay() { return true; }
     newGame() { this.questionsAnswered = 0; }
     renderDuelVictoryState() {}
     renderDuelDefeatState() {}
@@ -56,6 +61,8 @@ class EtymancerGame {
         const bossName = this.duel.bossName;
         this.player.level++;
         const goldReward = 50 + this.player.level * 10;
+        this.player.gold += goldReward;
+        this.player.mana = this.player.maxMana;
         this.duel = null;
         this.flow.screen = 'gameplay';
         this.flow.gameplayState = 'duel-victory';
@@ -94,10 +101,26 @@ game.challengeBoss('gorgon-garbled-roots');
 check('chosen boss starts a duel', game.duelTurnCalls === 1 && game.duel && game.duel.campaignBossId === 'gorgon-garbled-roots');
 check('chosen boss uses roster HP and hit values', game.duel.bossMaxHp === 95 && game.duel.bossHit === 14);
 
+// An active duel is resumable, not restartable, and blocks switching bosses.
+game.duel.bossHp = 41;
+game.showBossCampaign();
+check('active boss card shows battle in progress', /Battle in progress · 41\/95 HP/.test(html) && />Resume Battle<\/button>/.test(html));
+check('other bosses are locked while duel is active', (html.match(/>Battle in progress<\/button>/g) || []).length === 5);
+const activeDuel = game.duel;
+const turnsBeforeResume = game.duelTurnCalls;
+game.challengeBoss('lexivore');
+check('different boss cannot replace active duel', game.duel === activeDuel && game.duel.campaignBossId === 'gorgon-garbled-roots');
+game.challengeBoss('gorgon-garbled-roots');
+check('resuming active boss does not construct a fresh duel', game.duel === activeDuel && game.duel.bossHp === 41 && game.duelTurnCalls === turnsBeforeResume);
+
+const levelBefore = game.player.level;
+const goldBefore = game.player.gold;
 game.winDuel('<div>hit</div>');
 let rootsState = JSON.parse(localStorage.getItem('etymancerCampaign:roots'));
 check('victory persists boss completion for active Grimoire', rootsState.defeatedBossIds.includes('gorgon-garbled-roots'));
 check('victory screen reports campaign progress', /Campaign: 1\/6 bosses defeated/.test(html));
+check('campaign victory does not increment Etymancer Level', game.player.level === levelBefore && !/Level up!/.test(html));
+check('campaign victory awards level-neutral gold reward', game.player.gold - goldBefore === 50 + levelBefore * 10);
 
 game.showBossCampaign();
 check('defeated boss is marked and cannot be challenged again', /Defeated ✓/.test(html) && /button disabled[^>]*>Defeated<\/button>/.test(html));
