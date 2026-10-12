@@ -5,30 +5,60 @@ const ROOT = path.resolve(__dirname, '..');
 
 let store = {};
 const els = {};
+const created = {};
 const container = {dataset: {screen: 'menu'}};
 const ID_LIST = ['word-set','level','gold','mana','max-mana','streak','intelligence',
     'strength','armor','weapon','game-area','answer-input','new-game-btn'];
 
+function makeElement(tag = 'div') {
+    return {
+        tagName: tag,
+        id: '', type: '', textContent: '', innerHTML: '', className: '', dataset: {}, onclick: null,
+        children: [], parentNode: null, focused: false, value: '',
+        focus() { this.focused = true; },
+        setAttribute() {},
+        remove() {},
+        appendChild(node) {
+            node.parentNode = this;
+            this.children.push(node);
+            if (node.id) created[node.id] = node;
+        },
+        insertBefore(node) {
+            node.parentNode = this;
+            this.children.unshift(node);
+            if (node.id) created[node.id] = node;
+        },
+        querySelector(selector) {
+            if (selector === '[data-campaign-nav]') return this.children.find(c => c.dataset?.campaignNav) || null;
+            if (selector === '[data-campaign-menu]') return this.children.find(c => c.dataset?.campaignMenu) || null;
+            return null;
+        }
+    };
+}
+
+const mainPanel = makeElement('main');
+
 function resetDom() {
     container.dataset.screen = 'menu';
-    ID_LIST.forEach(id => els[id] = {
-        textContent:'', innerHTML:'', value:'', focus(){ this.focused = true; }, focused:false,
-        onclick:null, dataset:{}, querySelector(){ return null; }, appendChild(){}, parentNode:null
+    Object.keys(created).forEach(key => delete created[key]);
+    mainPanel.children = [];
+    ID_LIST.forEach(id => {
+        const el = makeElement();
+        el.id = id;
+        els[id] = el;
     });
 }
 resetDom();
 const headChildren = [];
 global.document = {
-    head: {appendChild(node) { headChildren.push(node); }},
-    getElementById: id => {
-        if (id === 'boss-campaign-styles') return headChildren.find(node => node.id === id) || null;
-        return els[id] || null;
+    head: {appendChild(node) { headChildren.push(node); if (node.id) created[node.id] = node; }},
+    getElementById: id => created[id] || els[id] || null,
+    querySelector: selector => {
+        if (selector === '.game-container') return container;
+        if (selector === '.main-panel') return mainPanel;
+        return null;
     },
-    querySelector: selector => selector === '.game-container' ? container : null,
-    createElement: tag => ({
-        tagName:tag, id:'', type:'', textContent:'', innerHTML:'', className:'', dataset:{}, onclick:null,
-        querySelector(){ return null; }, appendChild(){}, remove(){}, setAttribute(){}
-    })
+    createElement: tag => makeElement(tag)
 };
 global.localStorage = {
     getItem: k => (k in store ? store[k] : null),
@@ -81,6 +111,10 @@ function correctAnswerFor(game) {
     const {type, term} = game.currentAnswer;
     return type === 'definition' ? game.getDefinitionsForTerm(term)[0] : term;
 }
+function hasGameplayNav() {
+    const nav = document.getElementById('gameplay-nav');
+    return !!nav && !!nav.querySelector('[data-campaign-nav]') && container.dataset.screen === 'gameplay';
+}
 
 store = {};
 resetDom();
@@ -99,6 +133,7 @@ game.nextQuestion();
 eq('Continue advances directly to spell 11', game.questionsAnswered, 11);
 eq('spell 11 is a casting question', game.flow.gameplayState, 'casting-question');
 check('no automatic boss offer appears', !html().includes('air crackles'));
+check('casting shows complete gameplay navigation', hasGameplayNav());
 
 // Bosses behaves like a first-class side screen and remembers the casting return target.
 const castingQuestion = game.currentQuestion;
@@ -115,28 +150,47 @@ check('old casting return target was discarded', !game.flow.returnTo);
 eq('duel question flow recorded', game.flow.gameplayState, 'duel-question');
 check('duel question replaced old casting question', game.currentQuestion !== castingQuestion);
 
-// Existing explicit flow-state navigation still preserves an active campaign duel.
+// Existing explicit flow-state navigation preserves an active campaign duel.
 const duelQuestion = game.currentQuestion;
+game.duel.bossHp -= 17;
+game.duel.playerHp -= 9;
 const bossHp = game.duel.bossHp;
-game.showSpellbookSetup();
-game.showMainMenu();
-game.askQuestion();
-eq('duel detour restores selected boss HP', game.duel.bossHp, bossHp);
-eq('duel detour restores duel question', game.currentQuestion, duelQuestion);
-eq('duel detour resumes duel state', game.flow.gameplayState, 'duel-question');
+const playerHp = game.duel.playerHp;
+game.showBossCampaign();
+check('active boss is shown as resumable', html().includes('Resume Battle') && html().includes(`Battle in progress · ${bossHp}/130 HP`));
+check('other bosses are locked during active duel', (html().match(/>Battle in progress<\/button>/g) || []).length === 5);
+const duelObject = game.duel;
+game.challengeBoss('gorgon-garbled-roots');
+check('selecting another boss cannot reset active duel', game.duel === duelObject && game.duel.bossHp === bossHp && game.flow.screen === 'bosses');
+game.challengeBoss('lexivore');
+check('same boss resumes existing duel object', game.duel === duelObject);
+eq('resume preserves selected boss HP', game.duel.bossHp, bossHp);
+eq('resume preserves player HP', game.duel.playerHp, playerHp);
+eq('resume preserves duel question', game.currentQuestion, duelQuestion);
+eq('resume returns to duel state', game.flow.gameplayState, 'duel-question');
+check('resumed duel restores gameplay navigation', hasGameplayNav());
 
-// Winning marks only this Grimoire and renders campaign progress.
+// A normal spell -> Grimoire -> Continue Casting path must also restore all nav.
 game.duel.bossHp = 1;
+const levelBeforeVictory = game.player.level;
 els['answer-input'].value = correctAnswerFor(game);
 game.duelCast(false);
 const rootsCampaign = JSON.parse(localStorage.getItem('etymancerCampaign:roots'));
 check('campaign victory persists selected boss', rootsCampaign.defeatedBossIds.includes('lexivore'));
 check('victory shows 1/6 campaign progress', html().includes('Campaign: 1/6 bosses defeated'));
+eq('campaign victory does not change Etymancer Level', game.player.level, levelBeforeVictory);
+check('campaign victory does not show legacy level-up copy', !html().includes('Level up!'));
 eq('victory remains a resumable terminal duel state', game.flow.gameplayState, 'duel-victory');
 
-game.openBossCampaignAfterDuel();
+game.askQuestion();
+eq('Continue Casting after victory enters normal spell', game.flow.gameplayState, 'casting-question');
+game.showSpellbookSetup();
+game.askQuestion();
+eq('Grimoire Continue returns to same spell state', game.flow.gameplayState, 'casting-question');
+check('Boss battle -> Spell -> Grimoire -> Continue keeps gameplay nav', hasGameplayNav());
+
+game.showBossCampaign();
 check('completed boss card is marked defeated', html().includes('Defeated ✓'));
-check('leaving terminal duel for Bosses clears return target', !game.flow.returnTo);
 
 // Campaign progress is independent per Grimoire just like player/mastery progress.
 game.selectSpellbookForSetup('words');
