@@ -53,6 +53,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             'ui-navigation.js',
             'bosses.js',
             'boss-campaign.js',
+            'level-hold.js',
             'inventory.js',
             'debug.js'
         ];
