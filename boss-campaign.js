@@ -14,9 +14,15 @@
     const originalShowMainMenu = proto.showMainMenu;
     const originalEnsureUiShell = proto.ensureUiShell;
     const originalShowHelp = proto.showHelp;
+    const originalAskQuestion = proto.askQuestion;
+    const originalResumeCasting = proto.resumeCasting;
 
     function area() {
         return document.getElementById('game-area');
+    }
+
+    function shell() {
+        return document.querySelector('.game-container');
     }
 
     function safe(instance, text) {
@@ -32,6 +38,7 @@
             .boss-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
             .boss-card { border: 1px solid #006600; background: #001100; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
             .boss-card.defeated { border-color: #338833; opacity: .82; }
+            .boss-card.active-battle { border-color: #ffff00; }
             .boss-name { color: #ffff00; font-weight: bold; min-height: 2.4em; }
             .boss-threat { letter-spacing: .08em; }
             .boss-state { color: #aaffaa; font-size: .82rem; min-height: 1.3em; }
@@ -40,6 +47,13 @@
             @media (max-width: 600px) { .boss-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .boss-card { padding: 10px; } }
         `;
         document.head.appendChild(style);
+    }
+
+    function restoreGameplayChrome(instance) {
+        const container = shell();
+        if (container) container.dataset.screen = 'gameplay';
+        if (originalEnsureUiShell) originalEnsureUiShell.call(instance);
+        instance.ensureCampaignNavigation();
     }
 
     proto.campaignKey = function () {
@@ -83,6 +97,10 @@
         return this.campaignProgress();
     };
 
+    proto.activeCampaignBossId = function () {
+        return this.duel?.campaignBossId || null;
+    };
+
     proto.ensureCampaignNavigation = function () {
         injectStyles();
         const nav = document.getElementById('gameplay-nav');
@@ -121,16 +139,57 @@
         };
     }
 
+    // Explicitly restore the gameplay shell after any side-screen resume. This
+    // prevents a valid gameplay state from being rendered while the container
+    // still carries side-screen chrome/visibility rules.
+    if (originalResumeCasting) {
+        proto.resumeCasting = function () {
+            const result = originalResumeCasting.call(this);
+            restoreGameplayChrome(this);
+            return result;
+        };
+    }
+
+    if (originalAskQuestion) {
+        proto.askQuestion = function () {
+            const result = originalAskQuestion.call(this);
+            const flow = typeof this.ensureFlowState === 'function' ? this.ensureFlowState() : null;
+            if (flow?.screen === 'gameplay') restoreGameplayChrome(this);
+            return result;
+        };
+    }
+
     proto.renderBossCards = function () {
         const defeated = new Set(this.getCampaignState().defeatedBossIds);
+        const activeBossId = this.activeCampaignBossId();
         return BOSSES.map(boss => {
             const isDefeated = defeated.has(boss.id);
+            const isActive = activeBossId === boss.id;
+            const anotherActive = !!activeBossId && !isActive;
             const threat = '★'.repeat(boss.threat) + '☆'.repeat(BOSSES.length - boss.threat);
-            return `<article class="boss-card ${isDefeated ? 'defeated' : ''}">
+            let stateText;
+            let buttonText;
+            let disabled = false;
+            if (isDefeated) {
+                stateText = 'Defeated ✓';
+                buttonText = 'Defeated';
+                disabled = true;
+            } else if (isActive) {
+                stateText = `Battle in progress · ${Math.max(0, this.duel.bossHp)}/${this.duel.bossMaxHp} HP`;
+                buttonText = 'Resume Battle';
+            } else if (anotherActive) {
+                stateText = 'Finish your current battle first';
+                buttonText = 'Battle in progress';
+                disabled = true;
+            } else {
+                stateText = `${boss.hp} HP · ${boss.hit} damage on a miss`;
+                buttonText = 'Challenge';
+            }
+            return `<article class="boss-card ${isDefeated ? 'defeated' : ''} ${isActive ? 'active-battle' : ''}">
                 <div class="boss-name">${safe(this, boss.name)}</div>
                 <div class="boss-threat" aria-label="Threat ${boss.threat} of ${BOSSES.length}">${threat}</div>
-                <div class="boss-state">${isDefeated ? 'Defeated ✓' : `${boss.hp} HP · ${boss.hit} damage on a miss`}</div>
-                <button ${isDefeated ? 'disabled' : ''} onclick="game.challengeBoss('${boss.id}')">${isDefeated ? 'Defeated' : 'Challenge'}</button>
+                <div class="boss-state">${stateText}</div>
+                <button ${disabled ? 'disabled' : ''} onclick="game.challengeBoss('${boss.id}')">${buttonText}</button>
             </article>`;
         }).join('');
     };
@@ -161,9 +220,29 @@
         return this.showBossCampaign();
     };
 
+    proto.resumeActiveBoss = function () {
+        if (!this.activeCampaignBossId()) return this.showBossCampaign();
+        const flow = typeof this.ensureFlowState === 'function' ? this.ensureFlowState() : null;
+        if (flow?.returnTo && flow.gameplayState) return this.resumeCasting();
+        if (flow) {
+            flow.returnTo = null;
+            flow.screen = 'gameplay';
+        }
+        const result = typeof this.renderCurrentGameplay === 'function' ? this.renderCurrentGameplay() : this.duelTurn();
+        restoreGameplayChrome(this);
+        return result;
+    };
+
     proto.challengeBoss = function (bossId) {
         const boss = BOSSES.find(candidate => candidate.id === bossId);
         if (!boss || this.isBossDefeated(bossId)) return this.showBossCampaign();
+
+        const activeBossId = this.activeCampaignBossId();
+        if (activeBossId) {
+            if (activeBossId === bossId) return this.resumeActiveBoss();
+            return this.showBossCampaign();
+        }
+
         if (typeof this.discardGameplayReturn === 'function') this.discardGameplayReturn();
         this.currentQuestion = null;
         this.currentAnswer = null;
@@ -196,12 +275,32 @@
 
     proto.winDuel = function (outcomeHtml) {
         const bossId = this.duel?.campaignBossId || null;
+        if (!bossId) return originalWinDuel.call(this, outcomeHtml);
+
+        // The legacy duel engine increments player.level on victory despite there
+        // being no XP model. Preserve the mature duel/flow handling, then restore
+        // level and normalize the reward to the pre-victory level. A future level
+        // system is tracked separately from the campaign feature.
+        const levelBefore = this.player.level;
+        const goldBefore = this.player.gold;
         const result = originalWinDuel.call(this, outcomeHtml);
-        if (!bossId) return result;
+        const goldReward = 50 + levelBefore * 10;
+        this.player.level = levelBefore;
+        this.player.gold = goldBefore + goldReward;
+        this.player.mana = this.player.maxMana;
+        if (typeof this.updateStats === 'function') this.updateStats();
+        if (typeof this.saveGame === 'function') this.saveGame();
+
         const progress = this.markBossDefeated(bossId);
         const flow = typeof this.ensureFlowState === 'function' ? this.ensureFlowState() : null;
         if (flow?.gameplayState === 'duel-victory') {
-            flow.payload = {...(flow.payload || {}), campaignBossId: bossId, campaignProgress: progress};
+            flow.payload = {
+                ...(flow.payload || {}),
+                campaignBossId: bossId,
+                campaignProgress: progress,
+                level: levelBefore,
+                goldReward
+            };
             this.renderDuelVictoryState(flow.payload);
         }
         return result;
@@ -228,7 +327,6 @@
             ${payload.outcomeHtml || ''}
             <div class="correct">⚔️ VICTORY! ⚔️</div>
             <div>You vanquished the ${safe(this, payload.bossName || 'boss')}!</div>
-            <div>Level up! Now level ${payload.level || this.player.level}</div>
             <div>+${payload.goldReward || 0} gold, and your mana is fully restored!</div>
             <div class="boss-progress">Campaign: ${progress.defeated}/${progress.total} bosses defeated</div>
             ${progress.complete ? `<div class="campaign-complete"><strong>CAMPAIGN COMPLETE.</strong><br>Every boss in ${safe(this, this.wordSet.name)} has fallen.</div>` : ''}
@@ -237,6 +335,7 @@
                 <button onclick="game.askQuestion()">Continue Casting</button>
             </div>`;
         this.setScreen('gameplay');
+        restoreGameplayChrome(this);
     };
 
     proto.renderDuelDefeatState = function (payload = {}) {
@@ -254,6 +353,7 @@
                 <button onclick="game.askQuestion()">Keep Casting</button>
             </div>`;
         this.setScreen('gameplay');
+        restoreGameplayChrome(this);
     };
 
     if (originalShowHelp) {
