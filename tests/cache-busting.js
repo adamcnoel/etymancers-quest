@@ -67,6 +67,7 @@ const expected = [
     'src/features/boss-campaign.js',
     'src/features/level-hold.js',
     'src/features/inventory.js',
+    'src/features/boss-mechanics.js',
     'src/dev/debug.js'
 ];
 for (let i = 0; i < expected.length; i++) {
