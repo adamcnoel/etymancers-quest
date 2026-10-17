@@ -179,7 +179,7 @@
                 buttonText = 'Resume Battle';
             } else if (anotherActive) {
                 stateText = 'Finish your current battle first';
-                buttonText = 'Battle in progress';
+                buttonText = 'Unavailable';
                 disabled = true;
             } else {
                 stateText = `${boss.hp} HP · ${boss.hit} damage on a miss`;
