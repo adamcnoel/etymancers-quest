@@ -87,7 +87,8 @@ function loadGame() {
         'src/features/level-hold.js',
         'src/features/inventory.js'
     ];
-    const src = ['roots.js','words.js','equipment.js']
+    const data = ['src/data/roots.js','src/data/words.js','src/data/equipment.js'];
+    const src = data
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline
         + '\n' + extensions.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
@@ -127,7 +128,6 @@ check('deferred Etymancer Level is hidden from HUD', !/Lv\s+\d+/.test(document.g
 game.showCharacterSheet();
 check('deferred Etymancer Level is hidden from character sheet', !/Level\s+\d+/.test(html()));
 
-// Crossing a former modulo-10 boundary should now stay in casting.
 game.questionsAnswered = 9;
 game.askQuestion();
 eq('spell 10 starts normally', game.questionsAnswered, 10);
@@ -140,14 +140,12 @@ eq('spell 11 is a casting question', game.flow.gameplayState, 'casting-question'
 check('no automatic boss offer appears', !html().includes('air crackles'));
 check('casting shows complete gameplay navigation', hasGameplayNav());
 
-// Bosses behaves like a first-class side screen and remembers the casting return target.
 const castingQuestion = game.currentQuestion;
 game.showBossCampaign();
 check('Bosses screen renders six selectable cards', (html().match(/>Challenge<\/button>/g) || []).length === 6);
 eq('Bosses screen is its own screen', game.flow.screen, 'bosses');
 check('opening Bosses preserves casting return target', game.flow.returnTo?.gameplayState === 'casting-question');
 
-// Choosing a boss intentionally replaces the suspended normal-casting encounter.
 game.challengeBoss('lexivore');
 eq('selected boss id enters duel', game.duel.campaignBossId, 'lexivore');
 eq('selected boss uses fixed roster HP', game.duel.bossMaxHp, 130);
@@ -155,7 +153,6 @@ check('old casting return target was discarded', !game.flow.returnTo);
 eq('duel question flow recorded', game.flow.gameplayState, 'duel-question');
 check('duel question replaced old casting question', game.currentQuestion !== castingQuestion);
 
-// Existing explicit flow-state navigation preserves an active campaign duel.
 const duelQuestion = game.currentQuestion;
 game.duel.bossHp -= 17;
 game.duel.playerHp -= 9;
@@ -176,7 +173,6 @@ eq('resume preserves duel question', game.currentQuestion, duelQuestion);
 eq('resume returns to duel state', game.flow.gameplayState, 'duel-question');
 check('resumed duel restores gameplay navigation', hasGameplayNav());
 
-// A normal spell -> Grimoire -> Continue Casting path must also restore all nav.
 game.duel.bossHp = 1;
 const levelBeforeVictory = game.player.level;
 els['answer-input'].value = correctAnswerFor(game);
@@ -198,7 +194,6 @@ check('Boss battle -> Spell -> Grimoire -> Continue keeps gameplay nav', hasGame
 game.showBossCampaign();
 check('completed boss card is marked defeated', html().includes('Defeated ✓'));
 
-// Campaign progress is independent per Grimoire just like player/mastery progress.
 game.selectSpellbookForSetup('words');
 eq('switch activates other Grimoire', game.wordSet.id, 'words');
 eq('other Grimoire starts with zero defeated bosses', game.campaignProgress().defeated, 0);
