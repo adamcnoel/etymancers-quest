@@ -8,41 +8,46 @@
     if (proto.__uiNavigationInstalled) return;
     proto.__uiNavigationInstalled = true;
 
-    const originalShowMainMenu = proto.showMainMenu;
     const originalSelectSpellbookForSetup = proto.selectSpellbookForSetup;
 
     function area() {
         return document.getElementById('game-area');
     }
 
-    function shell() {
-        return document.querySelector('.game-container');
-    }
-
     function safe(text) {
         return game.escapeHtml ? game.escapeHtml(text) : String(text);
     }
 
-    function renderSessionStartMenu() {
+    function renderMainMenu(instance, returningToGameplay) {
         const gameArea = area();
-        if (!gameArea || !game.wordSet || !game.player) return;
+        if (!gameArea || !instance.wordSet || !instance.player) return;
+
+        const primaryLabel = returningToGameplay ? 'Continue Casting' : 'Begin Casting';
+        const statusTitle = returningToGameplay
+            ? 'Your adventure is in progress.'
+            : 'Your adventure is ready to begin.';
+
         gameArea.innerHTML = `
             <section class="screen-section menu-screen">
                 <div class="screen-kicker">MAIN MENU</div>
                 <div class="menu-status-card">
-                    <div class="screen-title">Your adventure is ready to begin.</div>
-                    <div>${safe(game.wordSet.name)}</div>
-                    <div class="examples">Review your Grimoire first, or begin casting when you're ready.</div>
+                    <div class="screen-title">${statusTitle}</div>
+                    <div>${safe(instance.wordSet.name)}</div>
+                    <div class="examples">Review your Grimoire, prepare your Etymancer, or enter the dungeon when you're ready.</div>
                 </div>
                 <div class="menu-actions">
-                    <button class="primary-action" onclick="game.askQuestion()">Begin Casting</button>
+                    <button class="primary-action" onclick="game.askQuestion()">${primaryLabel}</button>
                     <button onclick="game.showSpellbookSetup()">Grimoire</button>
+                    <button onclick="game.showCharacterSheet()">Etymancer</button>
+                    <button onclick="game.showShop()">Arcane Emporium</button>
                     <button onclick="game.showHelp()">How to Play</button>
+                    <button onclick="game.showResetConfirm()">Reset Grimoire</button>
                 </div>
             </section>`;
     }
 
-    proto.startNewGameFromUi = function () {
+    proto.resetGrimoireFromUi = function () {
+        if (!this.wordSet) return this.showSpellbookSetup();
         if (typeof this.discardGameplayReturn === 'function') this.discardGameplayReturn();
         this.newGame();
         this.currentQuestion = null;
@@ -52,18 +57,14 @@
     };
 
     proto.showMainMenu = function () {
-        const result = originalShowMainMenu.call(this);
+        // No selected Grimoire is onboarding, not a distinct menu state. Send a
+        // fresh device directly to the one screen where that choice is made.
+        if (!this.wordSet || !this.player) return this.showSpellbookSetup();
+
+        this.setScreen('menu');
         const flow = typeof this.ensureFlowState === 'function' ? this.ensureFlowState() : null;
         const returningToGameplay = !!flow?.returnTo;
-
-        // Persisted progress is not the same thing as an active page-session
-        // encounter. On a cold load there is no question/result/duel to resume,
-        // even if the save says 37 spells have been answered. Only an explicit
-        // in-session return target should produce Continue Casting.
-        if (!returningToGameplay && this.wordSet && this.player) {
-            renderSessionStartMenu();
-        }
-        return result;
+        renderMainMenu(this, returningToGameplay);
     };
 
     proto.showResetConfirm = function () {
@@ -73,11 +74,11 @@
         if (!gameArea) return;
         gameArea.innerHTML = `
             <section class="screen-section">
-                <div class="screen-kicker">NEW GAME</div>
+                <div class="screen-kicker">RESET GRIMOIRE</div>
                 <div class="screen-title">Reset ${safe(this.wordSet.name)}?</div>
-                <p>This resets level, gold, gear, mana, streak and mastery for this Grimoire only.</p>
+                <p>This resets spell progress, gold, gear, mana, streak, mastery, and boss campaign progress for this Grimoire only. Your other Grimoire is untouched.</p>
                 <div class="view-actions">
-                    <button class="danger-action" onclick="game.startNewGameFromUi()">Reset Progress</button>
+                    <button class="danger-action" onclick="game.resetGrimoireFromUi()">Reset Grimoire</button>
                     <button onclick="game.showMainMenu()">Cancel</button>
                 </div>
             </section>`;
@@ -90,12 +91,4 @@
         }
         return originalSelectSpellbookForSetup.call(this, setId);
     };
-
-    // ui.js renders the first menu before this final navigation policy is loaded.
-    // Re-render once so every cold page load uses the session-start menu. Saved
-    // study/RPG progress is preserved; only an in-page encounter is resumable.
-    const initialContainer = shell();
-    if (initialContainer && initialContainer.dataset.screen === 'menu') {
-        game.showMainMenu();
-    }
 })();
