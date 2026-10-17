@@ -5,7 +5,11 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'bootstrap.js')
 
 let domReady = null;
 const appended = [];
+const gameArea = {innerHTML: '<div>legacy start</div>'};
 const document = {
+    getElementById(id) {
+        return id === 'game-area' ? gameArea : null;
+    },
     createElement(tag) {
         if (tag !== 'script') throw new Error(`Unexpected element: ${tag}`);
         return {src: '', onload: null};
@@ -22,7 +26,18 @@ const window = {
     }
 };
 
-new Function('window', 'document', source)(window, document);
+let menuRenders = 0;
+let startRenders = 0;
+class Game {
+    showMainMenu() { menuRenders++; }
+    showStart() {
+        startRenders++;
+        this.showMainMenu();
+    }
+}
+const game = new Game();
+
+new Function('window', 'document', 'game', source)(window, document, game);
 
 let failed = 0;
 let checks = 0;
@@ -32,8 +47,10 @@ function check(label, condition) {
     else { failed++; console.error(`FAIL: ${label}`); }
 }
 
+check('bootstrap restores neutral loading shell before DOM ready', gameArea.innerHTML.includes('Loading your spellbook'));
 check('extension loader registers for DOMContentLoaded', typeof domReady === 'function');
 domReady();
+check('startup render is suppressed while extensions install', startRenders === 0 && menuRenders === 0);
 
 const expected = [
     'src/core/mastery.js',
@@ -55,8 +72,16 @@ const expected = [
 for (let i = 0; i < expected.length; i++) {
     const script = appended[i];
     check(`${expected[i]} is loaded`, !!script && script.src.startsWith(`${expected[i]}?v=`));
-    if (script && typeof script.onload === 'function') script.onload();
+    if (i < expected.length - 1) {
+        if (script && typeof script.onload === 'function') script.onload();
+        check(`no startup render before extension ${i + 2}`, startRenders === 0 && menuRenders === 0);
+    }
 }
+
+const finalScript = appended[expected.length - 1];
+if (finalScript && typeof finalScript.onload === 'function') finalScript.onload();
+check('bootstrap renders startup exactly once after final extension', startRenders === 1 && menuRenders === 1);
+check('temporary menu guard is removed before startup render', !Object.prototype.hasOwnProperty.call(game, 'showMainMenu'));
 
 const versions = appended.map(script => script.src.split('?v=')[1]);
 check('all extensions share one page-load cache token', versions.length === expected.length && versions.every(v => v && v === versions[0]));
