@@ -92,7 +92,7 @@ function loadGame() {
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline
         + '\n' + extensions.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
-        + '\nmodule.exports = {game, EtymancerGame, WORD_SETS};';
+        + '\nmodule.exports = {game, EtymancerGame, WORD_SETS, BOSSES};';
     const mod = {exports:{}};
     new Function('module','document','localStorage','setTimeout', src)
         (mod, global.document, global.localStorage, global.setTimeout);
@@ -120,7 +120,8 @@ function hasGameplayNav() {
 
 store = {};
 resetDom();
-const {game} = loadGame();
+const {game, BOSSES} = loadGame();
+const lexivore = BOSSES.find(boss => boss.id === 'lexivore');
 game.chooseWordSet('roots');
 game.newGame();
 
@@ -148,7 +149,7 @@ check('opening Bosses preserves casting return target', game.flow.returnTo?.game
 
 game.challengeBoss('lexivore');
 eq('selected boss id enters duel', game.duel.campaignBossId, 'lexivore');
-eq('selected boss uses fixed roster HP', game.duel.bossMaxHp, 130);
+eq('selected boss uses fixed roster HP', game.duel.bossMaxHp, lexivore.hp);
 check('old casting return target was discarded', !game.flow.returnTo);
 eq('duel question flow recorded', game.flow.gameplayState, 'duel-question');
 check('duel creates a fresh question encounter object', game.currentAnswer !== castingAnswer);
@@ -159,7 +160,7 @@ game.duel.playerHp -= 9;
 const bossHp = game.duel.bossHp;
 const playerHp = game.duel.playerHp;
 game.showBossCampaign();
-check('active boss is shown as resumable', html().includes('Resume Battle') && html().includes(`Battle in progress · ${bossHp}/130 HP`));
+check('active boss is shown as resumable', html().includes('Resume Battle') && html().includes(`Battle in progress · ${bossHp}/${lexivore.hp} HP`));
 check('only active boss is labeled battle in progress', (html().match(/Battle in progress/g) || []).length === 1);
 check('other bosses are locked during active duel', (html().match(/>Unavailable<\/button>/g) || []).length === 5 && (html().match(/Finish your current battle first/g) || []).length === 5);
 const duelObject = game.duel;
