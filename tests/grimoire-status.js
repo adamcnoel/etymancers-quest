@@ -41,7 +41,7 @@ class EtymancerGame {
 }
 
 const game = new EtymancerGame();
-const source = fs.readFileSync(path.join(__dirname, '..', 'grimoire-status.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'grimoire-status.js'), 'utf8');
 new Function('EtymancerGame', 'game', 'WORD_SETS', 'localStorage', source)
     (EtymancerGame, game, WORD_SETS, localStorage);
 
