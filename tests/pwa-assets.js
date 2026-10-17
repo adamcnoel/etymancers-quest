@@ -12,7 +12,7 @@ function check(label, condition) {
 
 const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const equipment = fs.readFileSync(path.join(ROOT, 'equipment.js'), 'utf8');
+const bootstrap = fs.readFileSync(path.join(ROOT, 'src', 'bootstrap.js'), 'utf8');
 
 check('PWA start_url remains GitHub Pages project root', manifest.start_url === '/etymancers-quest/');
 check('PWA display remains standalone', manifest.display === 'standalone');
@@ -34,8 +34,12 @@ for (const [label, pattern] of directAssets) {
     check(`${label} link resolves`, !!target && fs.existsSync(path.join(ROOT, target)));
 }
 
-const scriptRefs = [...equipment.matchAll(/'((?:src\/)[^']+\.js)'/g)].map(match => match[1]);
-check('extension loader declares source paths', scriptRefs.length >= 10);
+for (const target of ['src/data/roots.js', 'src/data/words.js', 'src/data/equipment.js', 'src/bootstrap.js']) {
+    check(`index script exists: ${target}`, html.includes(`src="${target}"`) && fs.existsSync(path.join(ROOT, target)));
+}
+
+const scriptRefs = [...bootstrap.matchAll(/'((?:src\/)[^']+\.js)'/g)].map(match => match[1]);
+check('extension bootstrap declares source paths', scriptRefs.length >= 10);
 for (const script of scriptRefs) {
     check(`extension exists: ${script}`, fs.existsSync(path.join(ROOT, script)));
 }
