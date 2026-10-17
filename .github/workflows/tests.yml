@@ -19,6 +19,10 @@ jobs:
 
       - name: Check browser extension syntax
         run: |
+          node --check src/bootstrap.js
+          node --check src/data/roots.js
+          node --check src/data/words.js
+          node --check src/data/equipment.js
           node --check src/core/mastery.js
           node --check src/core/mastery-spacing.js
           node --check src/ui/ui.js

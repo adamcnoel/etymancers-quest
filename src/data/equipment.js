@@ -15,7 +15,7 @@ const EQUIPMENT = {
     "dragon scale armor": {cost: 350, strength: 20, intelligence: 8, type: "armor"},
     "celestial robes": {cost: 420, strength: 5, intelligence: 25, type: "armor"},
     "godlike vestments": {cost: 600, strength: 15, intelligence: 35, type: "armor"},
-    
+
     // Weapons
     "wooden staff": {cost: 20, strength: 0, intelligence: 2, type: "weapon"},
     "iron sword": {cost: 60, strength: 8, intelligence: 0, type: "weapon"},
@@ -33,41 +33,3 @@ const EQUIPMENT = {
     "excalibur": {cost: 700, strength: 40, intelligence: 15, type: "weapon"},
     "staff of eternity": {cost: 650, strength: 10, intelligence: 40, type: "weapon"}
 };
-
-// Browser-only extensions depend on the EtymancerGame class and global game
-// instance defined later in index.html. Load them sequentially after the inline
-// game script so each layer can safely build on the previous one.
-// The guard keeps equipment.js safe for the Node-based playthrough harness.
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    window.addEventListener('DOMContentLoaded', () => {
-        const extensions = [
-            'src/core/mastery.js',
-            'src/core/mastery-spacing.js',
-            'src/ui/ui.js',
-            'src/ui/grimoire-status.js',
-            'src/ui/grimoire-sort.js',
-            'src/features/boss-flow.js',
-            'src/ui/cast-copy.js',
-            'src/core/flow-state.js',
-            'src/ui/duel-copy.js',
-            'src/ui/ui-navigation.js',
-            'src/data/bosses.js',
-            'src/features/boss-campaign.js',
-            'src/features/level-hold.js',
-            'src/features/inventory.js',
-            'src/dev/debug.js'
-        ];
-        // A fresh token on every page load prevents stale extension code from
-        // surviving branch switches or deployments. This affects browser asset
-        // caching only; game progress remains in the existing localStorage keys.
-        const cacheToken = Date.now();
-        const loadNext = index => {
-            if (index >= extensions.length) return;
-            const script = document.createElement('script');
-            script.src = `${extensions[index]}?v=${cacheToken}`;
-            script.onload = () => loadNext(index + 1);
-            document.body.appendChild(script);
-        };
-        loadNext(0);
-    });
-}

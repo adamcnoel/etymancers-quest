@@ -17,8 +17,8 @@ You can also open `index.html` directly in a modern browser.
 
 The game ships with two independent Grimoire datasets:
 
-- **Roots & Affixes** (`roots.js`) — Greek/Latin roots and examples; the harder list.
-- **Vocabulary Words** (`words.js`) — whole vocabulary words with multiple acceptable meanings; the easier list.
+- **Roots & Affixes** (`src/data/roots.js`) — Greek/Latin roots and examples; the harder list.
+- **Vocabulary Words** (`src/data/words.js`) — whole vocabulary words with multiple acceptable meanings; the easier list.
 
 Each Grimoire has its own save namespace (`etymancerSave:roots` / `etymancerSave:words`), including spell count, gold, equipment, mana, mastery, and campaign progress.
 
@@ -74,16 +74,13 @@ A cold reload preserves saved progress but starts a fresh page session rather th
 - `icon-512.png`
 - `icon-512-maskable.png`
 
-Those entry assets intentionally remain at the repository root so browser/PWA paths stay simple and stable. `tests/pwa-assets.js` verifies manifest, icon, stylesheet, and extension-loader paths.
+Those entry assets intentionally remain at the repository root so browser/PWA paths stay simple and stable. `tests/pwa-assets.js` verifies manifest, icon, stylesheet, data-script, bootstrap, and extension-loader paths.
 
 ## Project structure
 
 ```text
 /
 ├── index.html                 # Core game class and static page shell
-├── roots.js                   # Roots & Affixes data
-├── words.js                   # Vocabulary Words data
-├── equipment.js               # Equipment catalog + sequential extension loader
 ├── style.css                  # Retro terminal UI theme
 ├── manifest.json              # PWA metadata
 ├── favicon.svg
@@ -92,7 +89,11 @@ Those entry assets intentionally remain at the repository root so browser/PWA pa
 ├── icon-512.png
 ├── icon-512-maskable.png
 ├── src/
+│   ├── bootstrap.js           # Sequential extension loader + cache busting
 │   ├── data/
+│   │   ├── roots.js           # Roots & Affixes data
+│   │   ├── words.js           # Vocabulary Words data
+│   │   ├── equipment.js       # Equipment catalog
 │   │   └── bosses.js          # Six-boss roster/data
 │   ├── core/
 │   │   ├── mastery.js
@@ -116,7 +117,7 @@ Those entry assets intentionally remain at the repository root so browser/PWA pa
 └── .github/workflows/tests.yml
 ```
 
-The root files are the static-site entry points and directly loaded data/assets. Feature layers live under `src/` so the repository root stays readable without introducing a bundler or module build system.
+The repository root is limited to static-site/PWA entry files and assets. Game data and runtime JavaScript live under `src/`. `index.html` loads the three required data files first; after the core game is constructed, `src/bootstrap.js` loads the feature layers sequentially with a per-page cache-busting token.
 
 ## Tests
 
@@ -134,7 +135,7 @@ Individual regression scripts in `tests/` can also be run directly with Node.
 
 ## Editing vocabulary
 
-`roots.js` maps each root to a definition and examples:
+`src/data/roots.js` maps each root to a definition and examples:
 
 ```js
 const ROOTS = {
@@ -142,7 +143,7 @@ const ROOTS = {
 };
 ```
 
-`words.js` maps each word to an array of acceptable meanings:
+`src/data/words.js` maps each word to an array of acceptable meanings:
 
 ```js
 const WORDS = {

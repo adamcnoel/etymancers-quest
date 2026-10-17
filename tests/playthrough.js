@@ -47,7 +47,8 @@ function loadGame() {
         'src/ui/ui-navigation.js',
         'src/features/inventory.js'
     ];
-    const src = ['roots.js','words.js','equipment.js']
+    const data = ['src/data/roots.js','src/data/words.js','src/data/equipment.js'];
+    const src = data
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline
         + '\n' + extensions.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
@@ -234,15 +235,12 @@ section('7. Mastery progression and adaptive review');
 
     for (let i = 0; i < 6; i++) m2.game.recordMastery(strong, true);
 
-    // Compare weights only after both terms are outside the spacing window.
     m2.game.masterySequence += 3;
     m2.game.refillQuestionPool();
     const weakCount = m2.game.questionPool.filter(q => q.term === term).length;
     const strongCount = m2.game.questionPool.filter(q => q.term === strong).length;
     check('adaptive pool repeats weak terms more often', weakCount > strongCount, `${weakCount} vs ${strongCount}`);
 
-    // Integration check: the full mastery + spacing stack suppresses both
-    // directions of a just-answered term until three other answers intervene.
     const recentTerm = rootTerms[2];
     m2.game.recordMastery(recentTerm, true);
     m2.game.refillQuestionPool();
@@ -269,8 +267,6 @@ section('7. Mastery progression and adaptive review');
 
 section('8. Browser-session flow journeys');
 {
-    // Cold reload with persisted progress starts a new page session rather than
-    // pretending there is an in-memory encounter to continue.
     store = {}; resetDom();
     localStorage.setItem('etymancerWordSet', 'roots');
     localStorage.setItem('etymancerSave:roots', JSON.stringify({
@@ -286,7 +282,6 @@ section('8. Browser-session flow journeys');
     eq('cold load preserves saved spell count', cold.questionsAnswered, 23);
     eq('cold load preserves saved gold', cold.player.gold, 77);
 
-    // Spell 10 result must remain until the player explicitly continues.
     const {game} = freshGame('roots');
     game.questionsAnswered = 9;
     game.askQuestion();
@@ -300,15 +295,13 @@ section('8. Browser-session flow journeys');
     eq('boss offer remains spell 10', game.questionsAnswered, 10);
     eq('boss offer flow state recorded', game.flow.gameplayState, 'boss-offer');
 
-    // Reported chain: boss offer -> Grimoire -> Main Menu -> Continue Casting.
     game.showSpellbookSetup();
     game.showMainMenu();
     eq('boss-offer detour does not create spell 11', game.questionsAnswered, 10);
-    game.askQuestion(); // side-screen Continue Casting resolves to resume
+    game.askQuestion();
     check('boss-offer chained detour returns to boss offer', html().includes('air crackles'));
     eq('boss-offer chained detour still spell 10', game.questionsAnswered, 10);
 
-    // Active duel retains HP/question/state through several side screens.
     game.startDuel('Lexivore');
     game.duel.bossHp -= 7;
     const bossHp = game.duel.bossHp;
@@ -324,14 +317,12 @@ section('8. Browser-session flow journeys');
     eq('duel detour preserves question', game.currentQuestion, duelQuestion);
     eq('duel detour returns to duel question', game.flow.gameplayState, 'duel-question');
 
-    // Typed drafts are session flow data, not DOM snapshots.
     els['answer-input'].value = 'partial duel answer';
     game.showSpellbookSetup();
     game.showMainMenu();
     game.askQuestion();
     eq('duel draft survives detour', els['answer-input'].value, 'partial duel answer');
 
-    // Result screens survive side-screen navigation until explicit Continue.
     const normal = freshGame('roots').game;
     normal.askQuestion();
     answer(normal, correctAnswerFor(normal));
@@ -344,7 +335,6 @@ section('8. Browser-session flow journeys');
     eq('result detour preserves question', normal.currentQuestion, resultQuestion);
     check('result detour still shows Continue', html().includes('Continue'));
 
-    // Switching Grimoire intentionally abandons the old in-session encounter.
     normal.showSpellbookSetup();
     normal.selectSpellbookForSetup('words');
     check('Grimoire switch clears old return target', !normal.flow.returnTo);

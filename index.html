@@ -61,9 +61,9 @@
         </div>
     </div>
 
-    <script src="roots.js"></script>
-    <script src="words.js"></script>
-    <script src="equipment.js"></script>
+    <script src="src/data/roots.js"></script>
+    <script src="src/data/words.js"></script>
+    <script src="src/data/equipment.js"></script>
     <script>
         // Remembers which word list was played last.
         const ACTIVE_SET_KEY = 'etymancerWordSet';
@@ -214,15 +214,12 @@
                 const def = definitionKey(definition);
                 if (guess === def) return true;
 
-                // Accept an exact match on any significant word of the definition
-                // (e.g. "for" in "care for" is too short to count, but "care" does).
                 return def
                     .split(/[\s,/]+/)
                     .filter(word => word.length >= 3 && !STOPWORDS.has(word))
                     .includes(guess);
             }
 
-            // Every meaning the current list gives for a term.
             getDefinitionsForTerm(term) {
                 const entry = this.terms[term];
                 return entry ? entry.definitions : [];
@@ -233,8 +230,6 @@
                 return entry ? entry.examples : [];
             }
 
-            // Every term in the current list that can mean this definition —
-            // "tired" is answered by both 'drowsy' and 'weary'.
             getTermsForDefinition(definition) {
                 const key = definitionKey(definition);
                 return Object.keys(this.terms).filter(term =>
@@ -248,8 +243,6 @@
                 )];
             }
 
-            // Each word list keeps its own progress, so two players can share
-            // the browser without overwriting each other.
             saveKey() {
                 return `etymancerSave:${this.wordSet.id}`;
             }
@@ -267,17 +260,14 @@
                 const saved = localStorage.getItem(this.saveKey());
                 if (saved) {
                     const gameState = JSON.parse(saved);
-                    // The spread backfills any stat added since this save was written.
                     this.player = {...defaultPlayer(), ...gameState.player};
                     this.normalizeGearStats();
                     this.questionsAnswered = gameState.questionsAnswered || 0;
                     this.questionPool = (gameState.questionPool || [])
-                        // Older saves named the term "root" and its question type "root".
                         .map(q => ({
                             term: q.term || q.root,
                             type: q.type === "definition" ? "definition" : "term"
                         }))
-                        // Drop entries for terms the list no longer contains.
                         .filter(q => this.terms[q.term]);
                 } else {
                     this.newGame();
@@ -289,9 +279,6 @@
                 this.updateStats();
             }
 
-            // INT and STR are exactly the base plus the two equipped items.
-            // Saves written before equipping replaced gear had every purchase
-            // ever made stacked on top, which inflated both stats.
             normalizeGearStats() {
                 const armor = gearStats(this.player.armor);
                 const weapon = gearStats(this.player.weapon);
@@ -311,9 +298,6 @@
             refillQuestionPool() {
                 this.questionPool = [];
                 Object.keys(this.terms).forEach(term => {
-                    // One of each question pattern per term, so the two
-                    // alternate evenly. Which meaning the "term" pattern asks
-                    // about is picked at random when the question is shown.
                     this.questionPool.push({term, type: "definition"});
                     this.questionPool.push({term, type: "term"});
                 });
@@ -331,14 +315,10 @@
                 return 10 + Math.floor(this.questionsAnswered / 5) * 8;
             }
 
-            // Combo multiplier grows with the current streak: x1 at 0-1,
-            // x2 at 2-3, x3 at 4-5, capped at x5.
             getComboMultiplier() {
                 return Math.min(5, 1 + Math.floor(this.player.streak / 2));
             }
 
-            // Record a correct cast: advance the streak, award combo-scaled
-            // gold and mana. Returns a summary for the result screen.
             registerCast() {
                 this.player.streak++;
                 const multiplier = this.getComboMultiplier();
@@ -352,18 +332,13 @@
                 return {multiplier, gold, mana};
             }
 
-            // Record a failed cast (wrong answer or skip): the spell fizzles
-            // and the streak is broken.
             registerFizzle() {
                 this.player.streak = 0;
             }
 
-            // Evaluate a raw user answer against the current question.
-            // Returns true if correct. Shared by casting and dueling.
             evaluateAnswer(userAnswer) {
                 const {type, term, definition} = this.currentAnswer;
                 if (type === "definition") {
-                    // Any one of the term's meanings counts.
                     return this.getDefinitionsForTerm(term)
                         .some(def => this.isDefinitionMatch(userAnswer, def));
                 }
@@ -371,8 +346,6 @@
                     .includes(userAnswer.trim().toLowerCase());
             }
 
-            // What to reveal after a wrong answer or a fizzle: the answer itself
-            // plus any example words for it.
             revealAnswer() {
                 const {type, term, definition} = this.currentAnswer;
                 const label = this.wordSet.termLabel;
@@ -396,8 +369,6 @@
                 };
             }
 
-            // The reveal as it appears on a casting screen. `lead` opens the
-            // line, e.g. "Your spell fizzles!" vs "Spell released.".
             renderReveal(lead) {
                 const {headline, examples} = this.revealAnswer();
                 return `<div class="incorrect">
@@ -406,7 +377,6 @@
                 </div>`;
             }
 
-            // Build a simple text HP/mana bar out of block characters.
             renderBar(current, max, filledChar = "█", emptyChar = "░", width = 20) {
                 const safeMax = Math.max(1, max);
                 const clamped = Math.max(0, Math.min(current, safeMax));
@@ -440,8 +410,6 @@
                     this.currentQuestion = this.wordSet.definePrompt(term);
                     this.currentAnswer = {type: "definition", term};
                 } else {
-                    // Which meaning gets asked about is re-rolled each time the
-                    // term comes up, so a word with several meanings varies.
                     const definitions = this.getDefinitionsForTerm(term);
                     const definition = definitions[
                         Math.floor(Math.random() * definitions.length)
@@ -451,7 +419,6 @@
                 }
             }
             
-            // The opening screen: pick a word list, or greet a returning player.
             showStart() {
                 if (!this.wordSet) return this.showWordSetPicker();
 
@@ -469,7 +436,6 @@
                 `;
             }
 
-            // Each list is a difficulty level with its own saved progress.
             showWordSetPicker() {
                 const cards = Object.values(WORD_SETS).map(set => {
                     const active = set === this.wordSet;
@@ -499,8 +465,6 @@
             askQuestion() {
                 if (!this.wordSet) return this.showWordSetPicker();
                 this.generateQuestion();
-                // Only casting counts toward the spell tally: duel exchanges
-                // shouldn't inflate the gold ramp or queue another boss.
                 this.questionsAnswered++;
                 const comboBanner = this.player.streak >= 2
                     ? `<div class="combo">🔥 Combo x${this.getComboMultiplier()} (streak ${this.player.streak}) — earning ${this.getComboMultiplier()}× gold &amp; mana!</div>`
@@ -547,8 +511,6 @@
                 this.showCastResult(this.renderReveal('💨 Spell released.'));
             }
 
-            // The screen shown after a cast resolves, however it resolved: save,
-            // echo the answer if there was one, then offer the next spell.
             showCastResult(resultText, userAnswer) {
                 this.updateStats();
                 this.saveGame();
@@ -567,7 +529,6 @@
                     setTimeout(() => this.offerBossFight(), 1000);
                 }
             }
-
 
             nextQuestion() {
                 this.askQuestion();
@@ -593,8 +554,6 @@
             startDuel(bossName) {
                 const level = this.player.level;
                 const bossHp = 60 + level * 35;
-                // Strength counts double toward HP so gold buys survival as well
-                // as damage — otherwise boss hits outgrow your health pool.
                 const playerHp = 60 + this.player.strength * 2 + level * 10;
                 this.duel = {
                     bossName,
@@ -604,8 +563,6 @@
                     playerMaxHp: playerHp,
                     playerHp: playerHp,
                     duelStreak: 0,
-                    // Whether the Enter key channels. Sticky across exchanges so a
-                    // keyboard player can bank mana and still spend it.
                     channelArmed: false
                 };
                 this.duelTurn();
@@ -623,9 +580,6 @@
                 this.generateQuestion();
                 const d = this.duel;
                 const canChannel = this.player.mana >= 10;
-
-                // Damage the next CORRECT answer will deal. The streak bonus
-                // applies after the hit lands, so mirror that here.
                 const base = this.baseSpellDamage();
                 const streakBonus = (d.duelStreak + 1) * 2;
                 const nextDamage = base + streakBonus;
@@ -664,8 +618,6 @@
                 const userAnswer = input.value.trim().toLowerCase();
                 if (!userAnswer) return;
 
-                // Channel is only valid with enough mana; fall back to a normal
-                // cast if mana ran out between render and click, and say so.
                 let fallbackNote = '';
                 if (channel && this.player.mana < 10) {
                     channel = false;
@@ -686,7 +638,6 @@
                     outcome = `<div class="correct">✨ Your spell strikes for ${damage}${channel ? ' (CHANNELED — double damage, 10 mana spent!)' : ''}!</div>`;
                 } else {
                     d.duelStreak = 0;
-                    // A wasted channel still costs mana — commit before the miss.
                     if (channel) this.player.mana -= 10;
                     d.playerHp -= d.bossHit;
                     const reveal = this.revealAnswer();
@@ -702,7 +653,6 @@
                 if (d.bossHp <= 0) return this.winDuel(outcome);
                 if (d.playerHp <= 0) return this.loseDuel(outcome);
 
-                // Show the turn outcome, then continue to the next exchange.
                 document.getElementById('game-area').innerHTML = `
                     <div>=== SPELL DUEL: ${d.bossName} ===</div>
                     <div class="incorrect">Boss HP ${Math.max(0, d.bossHp)}/${d.bossMaxHp}  [${this.renderBar(d.bossHp, d.bossMaxHp)}]</div>
@@ -720,7 +670,6 @@
                 const goldReward = 50 + this.player.level * 10;
                 this.player.gold += goldReward;
                 this.player.mana = this.player.maxMana;
-                // The casting streak survives a victory — it was earned.
                 const bossName = this.duel.bossName;
                 this.duel = null;
                 this.updateStats();
@@ -810,20 +759,14 @@
                 `;
             }
 
-            // The strongest gear a player of this level may buy. Gold alone used
-            // to unlock everything within the first dozen spells, which froze
-            // INT/STR while bosses kept scaling.
             levelTierLimit() {
                 return 100 + this.player.level * 120;
             }
 
-            // Level at which an item becomes purchasable, from levelTierLimit().
             levelNeededFor(cost) {
                 return Math.max(1, Math.ceil((cost - 100) / 120));
             }
 
-            // A repeatable gold sink that also keeps Channels relevant: max mana
-            // grows with gold spent, but never beyond what your level allows.
             manaUpgrade() {
                 const cap = BASE_MAX_MANA + this.player.level * 10;
                 return {
@@ -848,8 +791,6 @@
                     `Mana crystal absorbed! Max mana is now ${this.player.maxMana}.`);
             }
 
-            // What equipping this item would do to your stats, given what's
-            // already in that slot — equipping replaces, it doesn't stack.
             netVsEquipped(itemName) {
                 const item = this.shopItems[itemName];
                 const slot = item.type === "armor" ? this.player.armor : this.player.weapon;
@@ -885,7 +826,6 @@
                     if (this.player.ownedItems.includes(item)) return;
 
                     if (stats.cost > tierLimit) {
-                        // Too strong for this level: remember when it opens up.
                         const needed = this.levelNeededFor(stats.cost);
                         if (stats.cost <= goldLimit && (lockedLevel === null || needed < lockedLevel)) {
                             lockedLevel = needed;
@@ -921,7 +861,6 @@
                     shopHTML += `<div class="examples">Stronger gear than this is held back until level ${lockedLevel}. Win duels to unlock it.</div>`;
                 }
 
-                // Anything owned but not equipped can be swapped back in for free.
                 const vault = this.player.ownedItems.filter(item =>
                     this.shopItems[item] &&
                     item !== this.player.armor &&
@@ -943,7 +882,6 @@
                 document.getElementById('game-area').innerHTML = shopHTML;
             }
 
-            // Move an owned item into its slot, swapping out whatever was there.
             equipItem(itemName) {
                 const item = this.shopItems[itemName];
                 if (!item || !this.player.ownedItems.includes(itemName)) return;
@@ -1038,5 +976,6 @@
             btn.onclick = () => confirmNewGame();
         }
     </script>
+    <script src="src/bootstrap.js"></script>
 </body>
 </html>
