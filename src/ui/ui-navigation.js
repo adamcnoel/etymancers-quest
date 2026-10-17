@@ -91,4 +91,13 @@
         }
         return originalSelectSpellbookForSetup.call(this, setId);
     };
+
+    // Direct-extension test harnesses do not run browser bootstrap. Keep their
+    // startup semantics aligned with the app. During a real browser load,
+    // bootstrap temporarily masks game.showMainMenu(), so this produces no
+    // intermediate visible render and bootstrap still owns first paint.
+    const initialContainer = document.querySelector('.game-container');
+    if (initialContainer && initialContainer.dataset.screen === 'menu') {
+        game.showMainMenu();
+    }
 })();
