@@ -39,7 +39,7 @@ global.game = new EtymancerGame();
 global.WORD_SETS = {};
 global.localStorage = {getItem: () => null};
 
-const ui = fs.readFileSync(path.join(__dirname, '..', 'ui.js'), 'utf8');
+const ui = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'ui.js'), 'utf8');
 new Function(ui)();
 
 global.game.showShop();
