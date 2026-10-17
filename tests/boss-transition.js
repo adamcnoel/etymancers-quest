@@ -27,7 +27,7 @@ class EtymancerGame {
 }
 
 const game = new EtymancerGame();
-const source = fs.readFileSync(path.join(__dirname, '..', 'boss-flow.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'boss-flow.js'), 'utf8');
 new Function('EtymancerGame', 'game', 'document', source)(EtymancerGame, game, global.document);
 
 let failed = 0;

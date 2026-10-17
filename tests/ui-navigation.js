@@ -46,7 +46,7 @@ class EtymancerGame {
 }
 
 const game = new EtymancerGame();
-const source = fs.readFileSync(path.join(__dirname, '..', 'ui-navigation.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'ui-navigation.js'), 'utf8');
 new Function('EtymancerGame', 'game', 'document', source)(EtymancerGame, game, global.document);
 
 let failed = 0;
@@ -78,8 +78,8 @@ check('new game resets state once', game.newGameCalls === 1);
 check('new game returns to menu', container.dataset.screen === 'menu');
 check('new game shows fresh menu', gameArea.innerHTML.includes('Your adventure is ready to begin.'));
 
-const navSource = fs.readFileSync(path.join(__dirname, '..', 'ui-navigation.js'), 'utf8');
-const flowSource = fs.readFileSync(path.join(__dirname, '..', 'flow-state.js'), 'utf8');
+const navSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'ui-navigation.js'), 'utf8');
+const flowSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'flow-state.js'), 'utf8');
 check('navigation policy no longer snapshots innerHTML', !navSource.includes('snapshot.html') && !navSource.includes('suspendedEncounter'));
 check('navigation policy no longer rewrites casting buttons', !navSource.includes('wireResumeButtons'));
 check('flow layer uses explicit gameplay states', flowSource.includes("'boss-offer'") && flowSource.includes("'duel-result'") && flowSource.includes('renderCurrentGameplay'));

@@ -93,9 +93,9 @@ class EtymancerGame {
 }
 
 const game = new EtymancerGame();
-const flowSource = fs.readFileSync(path.join(__dirname, '..', 'flow-state.js'), 'utf8');
+const flowSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'flow-state.js'), 'utf8');
 new Function('EtymancerGame', 'game', 'document', flowSource)(EtymancerGame, game, global.document);
-const navSource = fs.readFileSync(path.join(__dirname, '..', 'ui-navigation.js'), 'utf8');
+const navSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'ui-navigation.js'), 'utf8');
 new Function('EtymancerGame', 'game', 'document', navSource)(EtymancerGame, game, global.document);
 
 game.showInventory = function () {

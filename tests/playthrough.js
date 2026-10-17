@@ -39,13 +39,13 @@ function loadGame() {
     const inline = html.match(/<script>([\s\S]*?)<\/script>/g).pop()
         .replace(/^<script>/, '').replace(/<\/script>$/, '');
     const extensions = [
-        'mastery.js',
-        'mastery-spacing.js',
-        'ui.js',
-        'boss-flow.js',
-        'flow-state.js',
-        'ui-navigation.js',
-        'inventory.js'
+        'src/core/mastery.js',
+        'src/core/mastery-spacing.js',
+        'src/ui/ui.js',
+        'src/features/boss-flow.js',
+        'src/core/flow-state.js',
+        'src/ui/ui-navigation.js',
+        'src/features/inventory.js'
     ];
     const src = ['roots.js','words.js','equipment.js']
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')

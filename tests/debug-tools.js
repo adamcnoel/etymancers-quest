@@ -1,7 +1,7 @@
 // Regression checks for the opt-in ?debug=1 developer shortcuts.
 const fs = require('fs');
 const path = require('path');
-const source = fs.readFileSync(path.join(__dirname, '..', 'debug.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'dev', 'debug.js'), 'utf8');
 
 let failed = 0;
 let checks = 0;

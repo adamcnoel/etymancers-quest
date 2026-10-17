@@ -16,7 +16,7 @@ class EtymancerGame {
 
 global.EtymancerGame = EtymancerGame;
 
-const source = fs.readFileSync(path.join(__dirname, '..', 'grimoire-sort.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'grimoire-sort.js'), 'utf8');
 new Function(source)();
 
 let failed = 0;

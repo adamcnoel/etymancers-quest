@@ -7,7 +7,7 @@ class EtymancerGame {
 }
 global.EtymancerGame = EtymancerGame;
 
-const source = fs.readFileSync(path.join(__dirname, '..', 'cast-copy.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'cast-copy.js'), 'utf8');
 new Function(source)();
 
 const game = new EtymancerGame();

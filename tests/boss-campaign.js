@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const bossSource = fs.readFileSync(path.join(__dirname, '..', 'bosses.js'), 'utf8');
-const campaignSource = fs.readFileSync(path.join(__dirname, '..', 'boss-campaign.js'), 'utf8');
+const bossSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'bosses.js'), 'utf8');
+const campaignSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'boss-campaign.js'), 'utf8');
 
 let html = '';
 const gameArea = { get innerHTML() { return html; }, set innerHTML(value) { html = value; } };

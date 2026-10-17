@@ -72,20 +72,20 @@ function loadGame() {
     const inline = htmlSource.match(/<script>([\s\S]*?)<\/script>/g).pop()
         .replace(/^<script>/, '').replace(/<\/script>$/, '');
     const extensions = [
-        'mastery.js',
-        'mastery-spacing.js',
-        'ui.js',
-        'grimoire-status.js',
-        'grimoire-sort.js',
-        'boss-flow.js',
-        'cast-copy.js',
-        'flow-state.js',
-        'duel-copy.js',
-        'ui-navigation.js',
-        'bosses.js',
-        'boss-campaign.js',
-        'level-hold.js',
-        'inventory.js'
+        'src/core/mastery.js',
+        'src/core/mastery-spacing.js',
+        'src/ui/ui.js',
+        'src/ui/grimoire-status.js',
+        'src/ui/grimoire-sort.js',
+        'src/features/boss-flow.js',
+        'src/ui/cast-copy.js',
+        'src/core/flow-state.js',
+        'src/ui/duel-copy.js',
+        'src/ui/ui-navigation.js',
+        'src/data/bosses.js',
+        'src/features/boss-campaign.js',
+        'src/features/level-hold.js',
+        'src/features/inventory.js'
     ];
     const src = ['roots.js','words.js','equipment.js']
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
