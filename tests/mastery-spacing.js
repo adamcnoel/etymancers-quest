@@ -16,7 +16,7 @@ class EtymancerGame {
 }
 
 const game = new EtymancerGame();
-const source = fs.readFileSync(path.join(__dirname, '..', 'mastery-spacing.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'mastery-spacing.js'), 'utf8');
 new Function('EtymancerGame', 'game', source)(EtymancerGame, game);
 
 let failed = 0;
