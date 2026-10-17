@@ -20,7 +20,7 @@ class EtymancerGame {
 }
 global.EtymancerGame = EtymancerGame;
 
-const source = fs.readFileSync(path.join(__dirname, '..', 'duel-copy.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'duel-copy.js'), 'utf8');
 new Function(source)();
 const game = new EtymancerGame();
 game.duelTurn();
