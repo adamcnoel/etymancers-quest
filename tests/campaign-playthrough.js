@@ -140,7 +140,7 @@ eq('spell 11 is a casting question', game.flow.gameplayState, 'casting-question'
 check('no automatic boss offer appears', !html().includes('air crackles'));
 check('casting shows complete gameplay navigation', hasGameplayNav());
 
-const castingQuestion = game.currentQuestion;
+const castingAnswer = game.currentAnswer;
 game.showBossCampaign();
 check('Bosses screen renders six selectable cards', (html().match(/>Challenge<\/button>/g) || []).length === 6);
 eq('Bosses screen is its own screen', game.flow.screen, 'bosses');
@@ -151,7 +151,7 @@ eq('selected boss id enters duel', game.duel.campaignBossId, 'lexivore');
 eq('selected boss uses fixed roster HP', game.duel.bossMaxHp, 130);
 check('old casting return target was discarded', !game.flow.returnTo);
 eq('duel question flow recorded', game.flow.gameplayState, 'duel-question');
-check('duel question replaced old casting question', game.currentQuestion !== castingQuestion);
+check('duel creates a fresh question encounter object', game.currentAnswer !== castingAnswer);
 
 const duelQuestion = game.currentQuestion;
 game.duel.bossHp -= 17;
