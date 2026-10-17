@@ -114,7 +114,7 @@
                         <button onclick="game.showCharacterSheet()">Etymancer</button>
                         <button onclick="game.showShop()">Arcane Emporium</button>
                         <button onclick="game.showHelp()">How to Play</button>
-                        <button onclick="game.showResetConfirm()">New Game</button>
+                        <button onclick="game.showResetConfirm()">Reset Grimoire</button>
                     </div>` : `
                     <div class="screen-title">Choose a Grimoire to begin.</div>
                     <div class="examples">Review the material before casting, then enter the dungeon when you're ready.</div>
@@ -130,12 +130,11 @@
         if (!this.wordSet) return this.showSpellbookSetup();
         area().innerHTML = `
             <section class="screen-section">
-                <div class="screen-kicker">NEW GAME</div>
+                <div class="screen-kicker">RESET GRIMOIRE</div>
                 <div class="screen-title">Reset ${safe(this.wordSet.name)}?</div>
-                <p>This resets level, gold, gear, mana, streak and mastery for this Grimoire only.</p>
+                <p>This resets progress for this Grimoire only.</p>
                 <div class="view-actions">
-                    <button class="danger-action" onclick="newGame(); game.showMainMenu()">Reset Progress</button>
-                    <button onclick="game.showMainMenu()">Cancel</button>
+                    <button class="danger-action" onclick="game.showMainMenu()">Cancel</button>
                 </div>
             </section>`;
     };
