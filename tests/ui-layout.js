@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 
-const ui = fs.readFileSync(path.join(ROOT, 'ui.js'), 'utf8');
+const ui = fs.readFileSync(path.join(ROOT, 'src', 'ui', 'ui.js'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'style.css'), 'utf8');
 
 const playerFacingSpellbookPhrases = [
