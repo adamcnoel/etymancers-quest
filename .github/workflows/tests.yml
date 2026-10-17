@@ -37,6 +37,7 @@ jobs:
           node --check src/features/boss-campaign.js
           node --check src/features/level-hold.js
           node --check src/features/inventory.js
+          node --check src/features/boss-mechanics.js
           node --check src/dev/debug.js
 
       - name: Run playthrough tests
@@ -59,6 +60,9 @@ jobs:
 
       - name: Run boss campaign regression
         run: node tests/boss-campaign.js
+
+      - name: Run boss mechanics regression
+        run: node tests/boss-mechanics.js
 
       - name: Run UI architecture regression
         run: node tests/ui-layout.js
