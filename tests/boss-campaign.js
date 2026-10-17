@@ -105,7 +105,8 @@ check('chosen boss uses roster HP and hit values', game.duel.bossMaxHp === 95 &&
 game.duel.bossHp = 41;
 game.showBossCampaign();
 check('active boss card shows battle in progress', /Battle in progress · 41\/95 HP/.test(html) && />Resume Battle<\/button>/.test(html));
-check('other bosses are locked while duel is active', (html.match(/>Battle in progress<\/button>/g) || []).length === 5);
+check('only active boss is labeled battle in progress', (html.match(/Battle in progress/g) || []).length === 1);
+check('other bosses clearly show they are unavailable until current battle ends', (html.match(/Finish your current battle first/g) || []).length === 5 && (html.match(/>Unavailable<\/button>/g) || []).length === 5);
 const activeDuel = game.duel;
 const turnsBeforeResume = game.duelTurnCalls;
 game.challengeBoss('lexivore');
