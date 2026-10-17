@@ -36,21 +36,21 @@ check('extension loader registers for DOMContentLoaded', typeof domReady === 'fu
 domReady();
 
 const expected = [
-    'mastery.js',
-    'mastery-spacing.js',
-    'ui.js',
-    'grimoire-status.js',
-    'grimoire-sort.js',
-    'boss-flow.js',
-    'cast-copy.js',
-    'flow-state.js',
-    'duel-copy.js',
-    'ui-navigation.js',
-    'bosses.js',
-    'boss-campaign.js',
-    'level-hold.js',
-    'inventory.js',
-    'debug.js'
+    'src/core/mastery.js',
+    'src/core/mastery-spacing.js',
+    'src/ui/ui.js',
+    'src/ui/grimoire-status.js',
+    'src/ui/grimoire-sort.js',
+    'src/features/boss-flow.js',
+    'src/ui/cast-copy.js',
+    'src/core/flow-state.js',
+    'src/ui/duel-copy.js',
+    'src/ui/ui-navigation.js',
+    'src/data/bosses.js',
+    'src/features/boss-campaign.js',
+    'src/features/level-hold.js',
+    'src/features/inventory.js',
+    'src/dev/debug.js'
 ];
 for (let i = 0; i < expected.length; i++) {
     const script = appended[i];
