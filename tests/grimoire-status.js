@@ -52,11 +52,12 @@ function check(label, condition) {
     else { failed++; console.error(`FAIL: ${label}`); }
 }
 
-check('active Grimoire shows live spell/level/mastery', html.includes('Spell 23 · Level 4 · 6/10 mastered'));
-check('inactive Grimoire shows its saved spell/level/mastery', html.includes('Spell 7 · Level 2 · 4/12 mastered'));
+check('active Grimoire shows live spell/mastery', html.includes('Spell 23 · 6/10 mastered'));
+check('inactive Grimoire shows its saved spell/mastery', html.includes('Spell 7 · 4/12 mastered'));
+check('deferred Etymancer Level is not shown', !/Level\s+\d+/.test(html));
 check('active Grimoire keeps active treatment', html.includes('spellbook-card active') && html.includes('★ Roots & Affixes'));
 check('status is a distinct card line', (html.match(/spellbook-status/g) || []).length === 2);
 check('no explanatory save-model copy is added', !/keeps its own progress|independent save/i.test(html));
 
-console.log(`\nRESULT: ${5 - failed} checks passed, ${failed} failed`);
+console.log(`\nRESULT: ${6 - failed} checks passed, ${failed} failed`);
 if (failed) process.exitCode = 1;

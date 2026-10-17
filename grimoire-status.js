@@ -19,10 +19,8 @@
             const summary = typeof instance.masterySummary === 'function'
                 ? instance.masterySummary()
                 : {Mastered: 0, total: count};
-            const spell = Number(instance.questionsAnswered) || 0;
             return {
-                spell,
-                level: Number(instance.player.level) || 1,
+                spell: Number(instance.questionsAnswered) || 0,
                 mastered: Number(summary.Mastered) || 0,
                 total: Number(summary.total) || count
             };
@@ -30,18 +28,17 @@
 
         try {
             const saved = localStorage.getItem(`etymancerSave:${set.id}`);
-            if (!saved) return {spell: 0, level: 1, mastered: 0, total: count};
+            if (!saved) return {spell: 0, mastered: 0, total: count};
 
             const state = JSON.parse(saved);
             const mastery = state.mastery || {};
             return {
                 spell: Number(state.questionsAnswered) || 0,
-                level: Number(state.player?.level) || 1,
                 mastered: Object.values(mastery).filter(record => record?.stage === 'Mastered').length,
                 total: count
             };
         } catch (err) {
-            return {spell: 0, level: 1, mastered: 0, total: count};
+            return {spell: 0, mastered: 0, total: count};
         }
     }
 
@@ -55,7 +52,7 @@
             return `<button class="spellbook-card ${active ? 'active' : ''}" onclick="game.selectSpellbookForSetup('${set.id}')">
                 <span class="spellbook-name">${active ? '★ ' : ''}${safe(set.name)}</span>
                 <span class="spellbook-meta">${safe(set.grade)} · ${count} ${safe(set.termLabel)}s</span>
-                <span class="spellbook-status">${progress} · Level ${status.level} · ${status.mastered}/${status.total} mastered</span>
+                <span class="spellbook-status">${progress} · ${status.mastered}/${status.total} mastered</span>
                 <span class="spellbook-blurb">${safe(set.blurb)}</span>
             </button>`;
         }).join('');

@@ -51,6 +51,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             'flow-state.js',
             'duel-copy.js',
             'ui-navigation.js',
+            'bosses.js',
+            'boss-campaign.js',
+            'level-hold.js',
             'inventory.js',
             'debug.js'
         ];
