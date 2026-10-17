@@ -19,21 +19,21 @@ jobs:
 
       - name: Check browser extension syntax
         run: |
-          node --check mastery.js
-          node --check mastery-spacing.js
-          node --check ui.js
-          node --check grimoire-status.js
-          node --check grimoire-sort.js
-          node --check boss-flow.js
-          node --check cast-copy.js
-          node --check flow-state.js
-          node --check duel-copy.js
-          node --check ui-navigation.js
-          node --check bosses.js
-          node --check boss-campaign.js
-          node --check level-hold.js
-          node --check inventory.js
-          node --check debug.js
+          node --check src/core/mastery.js
+          node --check src/core/mastery-spacing.js
+          node --check src/ui/ui.js
+          node --check src/ui/grimoire-status.js
+          node --check src/ui/grimoire-sort.js
+          node --check src/features/boss-flow.js
+          node --check src/ui/cast-copy.js
+          node --check src/core/flow-state.js
+          node --check src/ui/duel-copy.js
+          node --check src/ui/ui-navigation.js
+          node --check src/data/bosses.js
+          node --check src/features/boss-campaign.js
+          node --check src/features/level-hold.js
+          node --check src/features/inventory.js
+          node --check src/dev/debug.js
 
       - name: Run playthrough tests
         run: node tests/playthrough.js
@@ -82,3 +82,6 @@ jobs:
 
       - name: Run boss transition regression
         run: node tests/boss-transition.js
+
+      - name: Run PWA asset/path regression
+        run: node tests/pwa-assets.js
