@@ -17,11 +17,11 @@ You can also open `index.html` directly in a modern browser.
 
 The game ships with three independent Grimoire datasets:
 
-- **Roots & Affixes** (`src/data/roots.js`) — the original Greek/Latin roots and examples; the harder list.
+- **The Word Within the Word · List #10** (`src/data/roots.js`, internal ID `roots`) — the original 25 Greek/Latin word parts and examples; existing progress is preserved.
 - **The Word Within the Word · List #11** (`src/data/roots-list-11.js`) — the 25 word parts, meanings, examples, and origins from the supplied study sheet.
 - **Vocabulary Words** (`src/data/words.js`) — whole vocabulary words with multiple acceptable meanings; the easier list.
 
-Each Grimoire has its own save namespace (`etymancerSave:roots`, `etymancerSave:roots11`, or `etymancerSave:words`), including spell count, gold, equipment, mana, mastery, and campaign progress. Choose List #11 from the Grimoire screen to study only that week's material without mixing it with previous roots.
+Each Grimoire has its own save namespace (`etymancerSave:roots`, `etymancerSave:roots11`, or `etymancerSave:words`), including spell count, gold, equipment, mana, mastery, and campaign progress. List #10 keeps the legacy internal ID `roots` so existing saves and campaign progress continue to work after its display name changes. Choose List #11 from the Grimoire screen to study only that week's material without mixing it with previous roots.
 
 ## Core study loop
 
@@ -92,7 +92,7 @@ Those entry assets intentionally remain at the repository root so browser/PWA pa
 ├── src/
 │   ├── bootstrap.js           # Sequential extension loader + cache busting
 │   ├── data/
-│   │   ├── roots.js           # Roots & Affixes data
+│   │   ├── roots.js           # Word Within the Word List #10 (legacy save ID: roots)
 │   │   ├── roots-list-11.js   # Word Within the Word List #11
 │   │   ├── words.js           # Vocabulary Words data
 │   │   ├── equipment.js       # Equipment catalog
