@@ -21,7 +21,7 @@ const localStorage = {
 
 const WORD_SETS = {
     roots: {
-        id: 'roots', name: 'Roots & Affixes', grade: 'harder', termLabel: 'root', blurb: 'Roots',
+        id: 'roots', name: 'The Word Within the Word · List #10', grade: 'List #10', termLabel: 'root', blurb: 'Roots',
         terms: Object.fromEntries(Array.from({length: 10}, (_, i) => [`r${i}`, {}]))
     },
     words: {
@@ -55,7 +55,7 @@ function check(label, condition) {
 check('active Grimoire shows live spell/mastery', html.includes('Spell 23 · 6/10 mastered'));
 check('inactive Grimoire shows its saved spell/mastery', html.includes('Spell 7 · 4/12 mastered'));
 check('deferred Etymancer Level is not shown', !/Level\s+\d+/.test(html));
-check('active Grimoire keeps active treatment', html.includes('spellbook-card active') && html.includes('★ Roots & Affixes'));
+check('active Grimoire keeps active treatment', html.includes('spellbook-card active') && html.includes('★ The Word Within the Word · List #10'));
 check('status is a distinct card line', (html.match(/spellbook-status/g) || []).length === 2);
 check('no explanatory save-model copy is added', !/keeps its own progress|independent save/i.test(html));
 
