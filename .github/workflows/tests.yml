@@ -21,6 +21,7 @@ jobs:
         run: |
           node --check src/bootstrap.js
           node --check src/data/roots.js
+          node --check src/data/roots-list-11.js
           node --check src/data/words.js
           node --check src/data/equipment.js
           node --check src/core/mastery.js
@@ -42,6 +43,9 @@ jobs:
 
       - name: Run playthrough tests
         run: node tests/playthrough.js
+
+      - name: Validate The Word Within the Word List #11
+        run: node tests/roots-list-11.js
 
       - name: Run campaign playthrough
         run: node tests/campaign-playthrough.js

@@ -34,7 +34,7 @@ for (const [label, pattern] of directAssets) {
     check(`${label} link resolves`, !!target && fs.existsSync(path.join(ROOT, target)));
 }
 
-for (const target of ['src/data/roots.js', 'src/data/words.js', 'src/data/equipment.js', 'src/bootstrap.js']) {
+for (const target of ['src/data/roots.js', 'src/data/roots-list-11.js', 'src/data/words.js', 'src/data/equipment.js', 'src/bootstrap.js']) {
     check(`index script exists: ${target}`, html.includes(`src="${target}"`) && fs.existsSync(path.join(ROOT, target)));
 }
 

@@ -47,7 +47,7 @@ function loadGame() {
         'src/ui/ui-navigation.js',
         'src/features/inventory.js'
     ];
-    const data = ['src/data/roots.js','src/data/words.js','src/data/equipment.js'];
+    const data = ['src/data/roots.js','src/data/roots-list-11.js','src/data/words.js','src/data/equipment.js'];
     const src = data
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline
@@ -99,6 +99,20 @@ section('1. Boot, lists, save isolation');
     m.game.player.gold = 42; m.game.saveGame();
     m.game.chooseWordSet('roots');
     eq('roots save restored', m.game.player.gold, 123);
+    m.game.chooseWordSet('roots11');
+    eq('List #11 Grimoire active', m.game.wordSet.id, 'roots11');
+    eq('List #11 contains exactly 25 word parts', Object.keys(m.game.terms).length, 25);
+    eq('List #11 suffix is preserved', m.game.getDefinitionsForTerm('-i')[0], 'plural');
+    eq('List #11 starts with independent gold', m.game.player.gold, 0);
+    m.game.currentAnswer = {type: 'term', term: 'ag', definition: 'to do'};
+    check('shared meaning accepts either ag or act in reverse', m.game.evaluateAnswer('ag') && m.game.evaluateAnswer('act'));
+    m.game.player.gold = 19; m.game.saveGame();
+    m.game.chooseWordSet('roots');
+    eq('original roots progress survives List #11 selection', m.game.player.gold, 123);
+    m.game.chooseWordSet('roots11');
+    eq('List #11 progress survives switching', m.game.player.gold, 19);
+    m.game.chooseWordSet('words');
+    eq('vocabulary words progress survives List #11 selection', m.game.player.gold, 42);
 }
 
 section('2. Casting, streaks, rewards, answer matching');
