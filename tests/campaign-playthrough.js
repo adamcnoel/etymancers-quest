@@ -87,7 +87,7 @@ function loadGame() {
         'src/features/level-hold.js',
         'src/features/inventory.js'
     ];
-    const data = ['src/data/roots.js','src/data/words.js','src/data/equipment.js'];
+    const data = ['src/data/roots.js','src/data/roots-list-11.js','src/data/words.js','src/data/equipment.js'];
     const src = data
         .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n')
         + '\n' + inline

@@ -15,12 +15,13 @@ You can also open `index.html` directly in a modern browser.
 
 ## Grimoire data
 
-The game ships with two independent Grimoire datasets:
+The game ships with three independent Grimoire datasets:
 
-- **Roots & Affixes** (`src/data/roots.js`) — Greek/Latin roots and examples; the harder list.
+- **Roots & Affixes** (`src/data/roots.js`) — the original Greek/Latin roots and examples; the harder list.
+- **The Word Within the Word · List #11** (`src/data/roots-list-11.js`) — the 25 word parts, meanings, examples, and origins from the supplied study sheet.
 - **Vocabulary Words** (`src/data/words.js`) — whole vocabulary words with multiple acceptable meanings; the easier list.
 
-Each Grimoire has its own save namespace (`etymancerSave:roots` / `etymancerSave:words`), including spell count, gold, equipment, mana, mastery, and campaign progress.
+Each Grimoire has its own save namespace (`etymancerSave:roots`, `etymancerSave:roots11`, or `etymancerSave:words`), including spell count, gold, equipment, mana, mastery, and campaign progress. Choose List #11 from the Grimoire screen to study only that week's material without mixing it with previous roots.
 
 ## Core study loop
 
@@ -92,6 +93,7 @@ Those entry assets intentionally remain at the repository root so browser/PWA pa
 │   ├── bootstrap.js           # Sequential extension loader + cache busting
 │   ├── data/
 │   │   ├── roots.js           # Roots & Affixes data
+│   │   ├── roots-list-11.js   # Word Within the Word List #11
 │   │   ├── words.js           # Vocabulary Words data
 │   │   ├── equipment.js       # Equipment catalog
 │   │   └── bosses.js          # Six-boss roster/data
@@ -117,7 +119,7 @@ Those entry assets intentionally remain at the repository root so browser/PWA pa
 └── .github/workflows/tests.yml
 ```
 
-The repository root is limited to static-site/PWA entry files and assets. Game data and runtime JavaScript live under `src/`. `index.html` loads the three required data files first; after the core game is constructed, `src/bootstrap.js` loads the feature layers sequentially with a per-page cache-busting token.
+The repository root is limited to static-site/PWA entry files and assets. Game data and runtime JavaScript live under `src/`. `index.html` loads the four required data files first; after the core game is constructed, `src/bootstrap.js` loads the feature layers sequentially with a per-page cache-busting token.
 
 ## Tests
 
@@ -135,7 +137,7 @@ Individual regression scripts in `tests/` can also be run directly with Node.
 
 ## Editing vocabulary
 
-`src/data/roots.js` maps each root to a definition and examples:
+`src/data/roots.js` and `src/data/roots-list-11.js` map each root to a definition and examples (List #11 also retains the printed origin):
 
 ```js
 const ROOTS = {
